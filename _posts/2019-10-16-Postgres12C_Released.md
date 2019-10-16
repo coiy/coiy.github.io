@@ -2,7 +2,7 @@
 published: true
 layout: single
 title: "Postgres12c_Released"
-category: Spring
+category: PostgreSQL
 comments: true
 ---
 

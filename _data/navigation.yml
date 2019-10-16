@@ -6,12 +6,10 @@ main:
     url: /categories/
   - title: Think
     url: /think/
-  - title: Spring
-    url: /spring/
+  - title: PostgreSQL
+    url: /postgresql/
   - title: CS
     url: /cs/
-  - title: "TIL"
-    url: /til/
   # - title: ""
   #   url: /there
   # - title: "Sample Posts"
