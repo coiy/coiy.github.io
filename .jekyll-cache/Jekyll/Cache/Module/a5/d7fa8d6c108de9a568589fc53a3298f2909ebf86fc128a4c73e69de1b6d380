@@ -1,21 +1,19 @@
-I"
+I"Ì
 
 <div class="masthead">
   <div class="masthead__inner-wrap">
     <div class="masthead__menu">
       <nav id="site-nav" class="greedy-nav">
         
-        <a class="site-title" href="/">Notes for PG</a>
+        <a class="site-title" href="/">Notes for DBA</a>
         <ul class="visible-links"><li class="masthead__menu-item">
               <a href="/categories/" >Archive</a>
             </li><li class="masthead__menu-item">
               <a href="/think/" >Think</a>
             </li><li class="masthead__menu-item">
-              <a href="/spring/" >Spring</a>
+              <a href="/postgresql/" >PostgreSQL</a>
             </li><li class="masthead__menu-item">
               <a href="/cs/" >CS</a>
-            </li><li class="masthead__menu-item">
-              <a href="/til/" >TIL</a>
             </li></ul>
         
         <button class="search__toggle" type="button">
