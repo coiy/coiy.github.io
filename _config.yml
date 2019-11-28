@@ -16,7 +16,7 @@ minimal_mistakes_skin    : "dirt" # "air", "aqua", "contrast", "dark", "dirt", "
 
 # Site Settings
 locale                   : "ko-KR"
-title                    : "Notes for DB"
+title                    : "Notes for PG"
 title_separator          : "-"
 name                     : "coiy"
 description              : ""
@@ -108,7 +108,7 @@ analytics:
 author:
   name             : "coiy"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "명상은 끝났다"
+  #bio              : "명상은 끝났다"
   #location         : "Somewhere"
   email            :
   links:
