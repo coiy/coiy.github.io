@@ -10,7 +10,7 @@ comments: false
 
 이 문서는 내가 2012년 일본에서 출간한 [PostgreSQL 바이블](https://www.amazon.co.jp/gp/product/4774153923/ref=dbs_a_def_rwt_hsch_vapi_taft_p1_i0)이라는 책의 2장을 토대로 썼으며 PostgreSQL 11 버전 이하를 다룬다.  
 
-## Contents 
+## 주요 내용 
 
 - 1장: 데이터베이스 클러스터, 데이터베이스, 테이블 
 - 2장: 프로세스와 메모리 아키텍쳐 
@@ -25,3 +25,4 @@ comments: false
 - 11장: 스트리밍 리플리케이션 (Streaming Replication)
 
 ![context-hierarchy](/assets/pg_architect.png)  
+> Resource from : [Resource from](http://www.interdb.jp/pg/index.html)  
