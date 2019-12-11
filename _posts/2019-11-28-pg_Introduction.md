@@ -12,7 +12,7 @@ comments: false
 
 ## 주요 내용 
 
-- 1장: 데이터베이스 클러스터, 데이터베이스, 테이블 
+- [1장: 데이터베이스 클러스터, 데이터베이스, 테이블](https://coiy.github.io/postgresql/pg_cluster/#) 
 - 2장: 프로세스와 메모리 아키텍쳐 
 - 3장: 쿼리 프로세싱
 - 4장: Foreign Data Wrappers (FDW)

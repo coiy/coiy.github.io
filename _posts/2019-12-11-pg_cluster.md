@@ -22,4 +22,4 @@ comments: false
 그림 1.1은 데이터베이스 클러스터의 논리적인 구조를 보여준다. PostgreSQL에서 `데이터베이스`란 그것을 이루고 있는 오브젝트들의 총칭(collection)이다. 관계형 데이터베이스 이론에서 데이터베이스 오브젝트는 데이터를 저장하거나 참조하기 위한 데이터 구조를 말한다. (힙) 테이블은 그 예의 하나로 데이터베이스 오브젝트로는 인덱스, 시퀀스, 뷰, 함수 등이 있다. PostgreSQL에서 데이터베이스들은 그 자체로 데이터베이스 오브젝트이며 서로 간에 논리적으로 분리되어 있다. 데이터베이스 오브젝트 이외의 오브젝트들, 예를 들어 테이블 또는 인덱스 같은 것들은 각각의 데이터베이스에 속해 있다.   
 
 ![context-hierarchy](/assets/pg_db_cluster.png)  
-> 그림 1:[Resource from](http://www.interdb.jp/pg/pgsql01.html)  
+> 그림 1.1 [출처](http://www.interdb.jp/pg/pgsql01.html)  
