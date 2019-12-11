@@ -12,16 +12,16 @@ comments: false
 
 ## Contents 
 
-• 1장: 데이터베이스 클러스터, 데이터베이스, 테이블 
-• 2장: 프로세스와 메모리 아키텍쳐 
-• 3장: 쿼리 프로세싱
-• 4장: Foreign Data Wrappers (FDW)
-• 5장: 동시성 제어 (Concurrency Control)
-• 6장: Vacuum 프로세싱 
-• 7장: Heap Only Tuple (HOT) and Index-Only 스캔 
-• 8장: 버퍼 매니저 
-• 9장: WAL (Write Ahead Logging)
-• 10장: 베이스 백업과 시점 지정 리커버리 (Base Backup and Point-In-Time Recovery)
-• 11장: 스트리밍 리플리케이션 (Streaming Replication)
+- 1장: 데이터베이스 클러스터, 데이터베이스, 테이블 
+- 2장: 프로세스와 메모리 아키텍쳐 
+- 3장: 쿼리 프로세싱
+- 4장: Foreign Data Wrappers (FDW)
+- 5장: 동시성 제어 (Concurrency Control)
+- 6장: Vacuum 프로세싱 
+- 7장: Heap Only Tuple (HOT) and Index-Only 스캔 
+- 8장: 버퍼 매니저 
+- 9장: WAL (Write Ahead Logging)
+- 10장: 베이스 백업과 시점 지정 리커버리 (Base Backup and Point-In-Time Recovery)
+- 11장: 스트리밍 리플리케이션 (Streaming Replication)
 
-![]({{ site.url }}{{ site.baseurl }}/assets/images/pg_architect.png ){: .align-center}
+![context-hierarchy](/assets/pg_architect.png)  
