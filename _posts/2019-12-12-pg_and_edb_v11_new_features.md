@@ -1,7 +1,7 @@
 ---
 published: true
 layout: single
-title: "New Features of PG and EDB v11"
+title: "EDB version 11 새로운 기능"
 category: PostgreSQL
 comments: false
 ---
