@@ -6,11 +6,6 @@ category: PostgreSQL
 comments: false
 ---
 
-- EDB사의 제공하는 Version 11 공식 [Release Notes](https://get.enterprisedb.com/docs/EPAS_Release_Notes_v11.pdf?_ga=2.140986673.2062198911.1576200190-181288000.1576200190) 
-- 일본 HP Enterprise에서 공개한 [PostgreSQL 11 New Features with Example](https://h50146.www5.hpe.com/products/software/oe/linux/mainstream/support/lcc/pdf/PostgreSQL_11_New_Features_beta1_en_20180525-1.pdf)
-- 2ndQuadrant사의 PostgreSQL 11의 [새로운 기능 소개](https://www.2ndquadrant.com/en/blog/tag/postgresql-11-new-features/) 
-- AWS RDS의 [PostgreSQL 매뉴얼](https://docs.aws.amazon.com/ko_kr/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html) 
-- MS Azure For PostgreSQL [문서](https://docs.microsoft.com/en-us/azure/postgresql/) 
 
 
 # Overview 
@@ -137,3 +132,12 @@ CREATE INDEX idx2 ON t_demo (data);
 ## 3. 해시 파티션 지원 
 PostgreSQL 11 버전부터 해시 파티션도 지원 시작. EDB에서는 10버전부터 오라클과의 호환성 차원에서 해시 파티션이 이미 가능함. 
 
+# 참고 링크 
+
+
+
+- EDB사의 제공하는 Version 11 공식 [Release Notes](https://get.enterprisedb.com/docs/EPAS_Release_Notes_v11.pdf?_ga=2.140986673.2062198911.1576200190-181288000.1576200190) 
+- 일본 HP Enterprise에서 공개한 [PostgreSQL 11 New Features with Example](https://h50146.www5.hpe.com/products/software/oe/linux/mainstream/support/lcc/pdf/PostgreSQL_11_New_Features_beta1_en_20180525-1.pdf)
+- 2ndQuadrant사의 PostgreSQL 11의 [새로운 기능 소개](https://www.2ndquadrant.com/en/blog/tag/postgresql-11-new-features/) 
+- AWS RDS의 [PostgreSQL 매뉴얼](https://docs.aws.amazon.com/ko_kr/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html) 
+- MS Azure For PostgreSQL [문서](https://docs.microsoft.com/en-us/azure/postgresql/) 
