@@ -34,7 +34,31 @@ comments: false
 
 # pg_upgrade
 
+1. 업그레이드 하고자 하는 버전의 EDB 설치 
+2. as-is에서 사용 중인 extension 미리 설치 
+3. initdb로 새 버전의 EDB 클러스터 생성 
+4. -c 옵션으로 as-is와 to-be 간의 호환성 체크  
 
+## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요
+```sql 
+[enterprisedb@EDB_11_6 data]$ /usr/edb/as12/bin/pg_upgrade -c
+Performing Consistency Checks on Old Live Server
+------------------------------------------------
+Checking cluster versions                                   ok
+Checking database user is the install user                  ok
+Checking database connection settings                       ok
+Checking for prepared transactions                          ok
+Checking for reg* data types in user tables                 ok
+Checking for contrib/isn with bigint-passing mismatch       ok
+Checking for tables WITH OIDS                               ok
+Checking for invalid "sql_identifier" user columns          ok
+Checking for presence of required libraries                 ok
+Checking database user is the install user                  ok
+Checking for prepared transactions                          ok
+```
 
+장점 
+- 링크 모드를 이용하면 다운 타임을 최소화하면서 엔진 업그레이드가 가능 
 
-# Replication
+단점 
+- 소스(source)와 타겟(target) 시스템이 같은 호스트여야 한다 
