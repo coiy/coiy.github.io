@@ -6,10 +6,15 @@ category: PostgreSQL
 comments: false
 ---
 
+# 무엇이 메이저 버전 업그레이드인가 
+
+![context-hierarchy](/assets/versions.png)  
+
+
 메이저 버전을 업그레이드 하는 방법은 크게 3가지 방법이 있고 PG 개발그룹(PGDG)에서도 이 [3가지 방법](https://www.postgresql.org/docs/10/upgrading.html)을 권고하고 있다. 
 
 - pg_dumpall
-- pg_upgrade 👈 오늘 중점적으로 다룰 방법 
+- pg_upgrade 👈 이번에 다루는 방법 
 - via Replication
 
 
@@ -23,23 +28,23 @@ comments: false
 - 100GB 이하 급의 작은 클러스터에 적합   
 - 상위 버전의 pg_dumpall/pg_dump를 이용하고 pg_dump의 full path 명시하여 실행
 
-
 단점 
 - 데이터베이스가 크면 클수록 다운타임도 더 필요하고 그 시간을 예측하기가 어려움    
 - 따라서 수백 GB급 또는 TB 이상의 사이즈인 클러스터를 대상으로는 최선의 옵션이라고 보기 어려움
 - as-is, to-be 이중으로 스토리지 공간이 필요함   
 
-
-
+  
+![context-hierarchy](/assets/downtime_1.png)  
+> pg_dumpall 방식으로 진행하는 경우의 대체적인 작업 타임라인
 
 # pg_upgrade
 
 1. 업그레이드 하고자 하는 버전의 EDB 설치 
-2. as-is에서 사용 중인 extension 미리 설치 
+2. as-is에서 사용 중인 extension을 파악해두고 to-be EDB에 미리 설치 
 3. initdb로 새 버전의 EDB 클러스터 생성 
-4. -c 옵션으로 as-is와 to-be 간의 호환성 체크  
+4. -c 옵션으로 as-is와 to-be 간의 호환성 체크   
 
-## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요
+## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요 
 ```sql 
 [enterprisedb@EDB_11_6 data]$ /usr/edb/as12/bin/pg_upgrade -c
 Performing Consistency Checks on Old Live Server
