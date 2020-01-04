@@ -391,6 +391,33 @@ ORDER BY job ;
 - 12 버전부터는 CAST 구문에서 MULTISET 표현식 안의 서브쿼리가 반환하는 컬렉션 타입의 값도 취할 수 있도록 지원   
 
 
+```sql 
+SELECT ename, CAST(hiredates varchar2) from employees;
+```
+> 11버전에서도 CAST를 이용한 기본적인 형변환은 지원 
+
+```sql 
+CREATE OR REPLACE TYPE project_table_t AS TABLE OF VARCHAR2(25);
+CREATE TABLE projects (person_id NUMBER(10), project_name VARCHAR2(20));
+CREATE TABLE pers_short(person_id NUMBER(10), last_name VARCHAR2(25));  
+
+begin ;
+INSERT INTO projects VALUES (1, 'Teach'); 
+INSERT INTO projects VALUES (1, 'Code');
+INSERT INTO projects VALUES (2, 'Code');
+
+INSERT INTO pers_short VALUES (1, 'Morgan');
+INSERT INTO pers_short VALUES (2, 'Kolk'); 
+INSERT INTO pers_short VALUES (3, 'Scott'); 
+commit; 
+
+SELECT e.last_name,
+CAST(MULTISET(SELECT p.project_name  
+FROM projects p  WHERE p.person_id= e.person_id ORDER BY p.project_name) AS project_table_t)
+FROM pers_short e;
+```
+
+
 ## %TYPE과 %ROWTYPE를 Package DDL에서도 지원 
 - 9.5버전부터 Function, Procedure에서는 사용 가능했고 적용 범위를 Package에도 확대 
 - 테이블이나 뷰의 컬럼 데이터형, 크기, 속성 등을 그대로 사용할 수 있다 
