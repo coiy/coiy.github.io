@@ -24,7 +24,7 @@ comments: false
 - Plain Text SQL문으로 백업
 - 클러스터 레벨로 백업
 - 데이터베이스 레벨로 백업을 하고자 할 때에는 pg_dump 사용  
-- 데이터베이스 레벨로 스키마 변경 없이 단순히 펌프만 받을 때는 pg_dump -Fc 옵션을 사용하면 덤프 파일 용량이 최소 4배~7배 줄어듬 
+- 데이터베이스 레벨로 스키마 변경 없이 단순히 덤프만 받을 때는 pg_dump -Fc 옵션을 사용하면 덤프 파일 용량이 4배~7배 가량 줄어듬 
 - 100GB 이하 급의 작은 클러스터에 적합   
 - 상위 버전의 pg_dumpall/pg_dump를 이용하고 pg_dump의 full path 명시하여 실행
 
@@ -39,12 +39,23 @@ comments: false
 
 # pg_upgrade
 
+## EDB사에서 공식적으로 발표한 pg_upgrade로 업그레이드가 불가능한 경우 - [제한사항(Limitations)](https://www.enterprisedb.com/edb-docs/d/edb-postgres-advanced-server/installation-getting-started/upgrade-guide/12/EDB_Postgres_Advanced_Server_Upgrade_Guide.1.06.html) 
+
+- data directory가 NFS 파일시스템을 사용하는 경우
+- ✔️ 파티션 테이블을 참조하는 Foreign key 제약조건이 존재하는 경우 (특히 9.4 이하 버전에서 SUBPARTITION BY 구문으로 써서 파티션 테이블을 생성했다면 pg_dump & pg_restore를 이용하여 해당 테이블은 따로 복원해줘야 한다)
+- 해시 파티션인 경우 pg_upgrade 후에 리빌드가 필요 
+
+
 1. 업그레이드 하고자 하는 버전의 EDB 설치 
 2. as-is에서 사용 중인 extension을 파악해두고 to-be EDB에 미리 설치 
-3. initdb로 새 버전의 EDB 클러스터 생성 
-4. -c 옵션으로 as-is와 to-be 간의 호환성 체크   
+3. ✔️ github 등에 공개된 사용자 정의 모듈의 경우 새 버전을 지원하는 모듈이 아직 개발되지 않았을 수 있음
+4. 통상 $PGDATA 환경변수에 지정하는 데이터 디렉토리 이외의 영역에서 테이블스페이스를 사용하는 경우 장애 포인트가 될 수도 있음
+5. 기존의 postgresql.conf, pg_hba.conf, SSL 설정을 위한 인증키 등은 pg_upgrade -c 체크기능으로 그 오류를 거를 수 없기 때문에 미리 사전작업을 해두어야 함 
+6. initdb로 새 버전의 EDB 클러스터 생성 
+7. -c 옵션으로 as-is와 to-be 간의 호환성 체크   
 
-## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요 
+## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요. 사전 체크를 통과했다고 하더라도 pg_upgrade 작업 중에 에러가 있을 수 있음에 유의. 최소한의 기준은 통과했다는 정도로 받아들이자. 
+
 ```sql 
 [enterprisedb@EDB_11_6 data]$ /usr/edb/as12/bin/pg_upgrade -c
 Performing Consistency Checks on Old Live Server
@@ -67,3 +78,74 @@ Checking for prepared transactions                          ok
 
 단점 
 - 소스(source)와 타겟(target) 시스템이 같은 호스트여야 한다 
+
+
+>link 방식의 pg_upgrade 실행 결과 
+```sql 
+[enterprisedb@EFM_EDB_11_master data]$ pg_upgrade -d /var/lib/edb/as11/data -D /var/lib/edb/as12/data -b /usr/edb/as11/bin -B /usr/edb/as12/bin -p 5444 -P 5445 -j 2 --link
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                   ok
+Checking database user is the install user                  ok
+Checking database connection settings                       ok
+Checking for prepared transactions                          ok
+Checking for reg* data types in user tables                 ok
+Checking for contrib/isn with bigint-passing mismatch       ok
+Checking for tables WITH OIDS                               ok
+Checking for invalid "sql_identifier" user columns          ok
+Creating dump of global objects                             ok
+Creating dump of database schemas
+                                                            ok
+Checking for presence of required libraries                 ok
+Checking database user is the install user                  ok
+Checking for prepared transactions                          ok
+
+If pg_upgrade fails after this point, you must re-initdb the
+new cluster before continuing.
+
+Performing Upgrade
+------------------
+Analyzing all rows in the new cluster                       ok
+Freezing all rows in the new cluster                        ok
+Deleting files from new pg_xact                             ok
+Copying old pg_xact to new server                           ok
+Setting next transaction ID and epoch for new cluster       ok
+Deleting files from new pg_multixact/offsets                ok
+Copying old pg_multixact/offsets to new server              ok
+Deleting files from new pg_multixact/members                ok
+Copying old pg_multixact/members to new server              ok
+Setting next multixact ID and offset for new cluster        ok
+Resetting WAL archives                                      ok
+Setting frozenxid and minmxid counters in new cluster       ok
+Restoring global objects in the new cluster                 ok
+Restoring database schemas in the new cluster
+                                                            ok
+Adding ".old" suffix to old global/pg_control               ok
+
+If you want to start the old cluster, you will need to remove
+the ".old" suffix from /var/lib/edb/as11/data/global/pg_control.old.
+Because "link" mode was used, the old cluster cannot be safely
+started once the new cluster has been started.
+
+Linking user relation files
+                                                            ok
+Setting next OID for new cluster                            ok
+Sync data directory to disk                                 ok
+Creating script to analyze new cluster                      ok
+Creating script to delete old cluster                       ok
+
+Upgrade Complete
+----------------
+Optimizer statistics are not transferred by pg_upgrade so,
+once you start the new server, consider running:
+    ./analyze_new_cluster.sh
+
+Running this script will delete the old cluster's data files:
+    ./delete_old_cluster.sh
+[enterprisedb@EFM_EDB_11_master data]$
+```
+무사히 pg_upgrade가 끝났다면 vacuum을 실행하고 old 데이터 디렉토리를 삭제하는 스크립트가 자동으로 생성된다. 
+```bash 
+$ /usr/edb/as12/bin/vacuumdb -p 5445 --all --analyze-in-stages
+$ ./delete_old_cluster.sh
+```
