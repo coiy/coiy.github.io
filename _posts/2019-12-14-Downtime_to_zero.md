@@ -54,7 +54,9 @@ comments: false
 6. initdb로 새 버전의 EDB 클러스터 생성 
 7. -c 옵션으로 as-is와 to-be 간의 호환성 체크   
 
-## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요. 사전 체크를 통과했다고 하더라도 pg_upgrade 작업 중에 에러가 있을 수 있음에 유의. 최소한의 기준은 통과했다는 정도로 받아들이자. 
+## ✔️ 3번 단계까지 진행한 후 본격적인 업그레이드 작업을 시작하기 전에 -c 옵션으로 호환성 체크를 해보는 것이 중요. 
+
+## ✔️ 사전 체크를 통과했더라도 pg_upgrade 작업 중에 에러가 있을 수 있음에 유의. 최소한의 기준은 통과했다는 정도로 받아들이자. 
 
 ```sql 
 [enterprisedb@EDB_11_6 data]$ /usr/edb/as12/bin/pg_upgrade -c
@@ -81,10 +83,11 @@ Checking for prepared transactions                          ok
 
 
 >link 방식의 pg_upgrade 실행 결과 
+
 ```sql 
 [enterprisedb@EFM_EDB_11_master data]$ pg_upgrade -d /var/lib/edb/as11/data -D /var/lib/edb/as12/data -b /usr/edb/as11/bin -B /usr/edb/as12/bin -p 5444 -P 5445 -j 2 --link
 Performing Consistency Checks
------------------------------
+
 Checking cluster versions                                   ok
 Checking database user is the install user                  ok
 Checking database connection settings                       ok
@@ -104,7 +107,7 @@ If pg_upgrade fails after this point, you must re-initdb the
 new cluster before continuing.
 
 Performing Upgrade
-------------------
+
 Analyzing all rows in the new cluster                       ok
 Freezing all rows in the new cluster                        ok
 Deleting files from new pg_xact                             ok
@@ -135,7 +138,7 @@ Creating script to analyze new cluster                      ok
 Creating script to delete old cluster                       ok
 
 Upgrade Complete
-----------------
+
 Optimizer statistics are not transferred by pg_upgrade so,
 once you start the new server, consider running:
     ./analyze_new_cluster.sh
@@ -144,6 +147,7 @@ Running this script will delete the old cluster's data files:
     ./delete_old_cluster.sh
 [enterprisedb@EFM_EDB_11_master data]$
 ```
+
 무사히 pg_upgrade가 끝났다면 vacuum을 실행하고 old 데이터 디렉토리를 삭제하는 스크립트가 자동으로 생성된다. 
 ```bash 
 $ /usr/edb/as12/bin/vacuumdb -p 5445 --all --analyze-in-stages
