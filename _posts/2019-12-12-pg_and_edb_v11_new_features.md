@@ -81,7 +81,7 @@ explain create table para_1 as select count(*) from t_random ;
 numberic 타입의 랜덤 더미 데이터 100만 건을 작성한다. 
 
 ```sql 
-CREATE TABLE t_demo (data numeric);
+CREATE TABLE t_demo (data numeric) tablespace tbs_master;
  
 CREATE OR REPLACE PROCEDURE insert_data(buckets integer)
 LANGUAGE plpgsql

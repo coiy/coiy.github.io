@@ -85,13 +85,13 @@ dummy text,
 created date)
 partition by range (created)
 interval (numtoyminterval(1,'month'))
-( partition my_part_tab_1 values less than (to_date('01.02.2019','YYYY.MM.DD')));
+( partition my_part_tab_1 values less than (to_date('2019.02.01','YYYY.MM.DD')));
 
 ⬇️ 해당하는 파티션이 있기에 문제 없이 insert가 가능한 쿼리 
-insert into my_part_tab (id,dummy,created) values (1,'aaa',to_date('05.01.2019','YYYY.MM.DD'));
+insert into my_part_tab (id,dummy,created) values (1,'aaa',to_date('2019.01.05','YYYY.MM.DD'));
 
 ⬇️ 해당하는 파티션이 없음에도 insert 가능!  
-insert into my_part_tab (id,dummy,created) values (1,'aaa',to_date('05.02.2019','YYYY.MM.DD'));
+insert into my_part_tab (id,dummy,created) values (1,'aaa',to_date('2019.02.05','YYYY.MM.DD'));
 ```
 
 ## 파티션 테이블에 대한 외래키 작성 가능 
@@ -397,18 +397,19 @@ SELECT ename, CAST(hiredates varchar2) from employees;
 > 11버전에서도 CAST를 이용한 기본적인 형변환은 지원 
 
 ```sql 
+-- 컬렉션 선언 
 CREATE OR REPLACE TYPE project_table_t AS TABLE OF VARCHAR2(25);
 CREATE TABLE projects (person_id NUMBER(10), project_name VARCHAR2(20));
 CREATE TABLE pers_short(person_id NUMBER(10), last_name VARCHAR2(25));  
 
 begin ;
-INSERT INTO projects VALUES (1, 'Teach'); 
-INSERT INTO projects VALUES (1, 'Code');
-INSERT INTO projects VALUES (2, 'Code');
+INSERT INTO projects VALUES (1, '교육'); 
+INSERT INTO projects VALUES (1, '코드');
+INSERT INTO projects VALUES (2, '데이터');
 
-INSERT INTO pers_short VALUES (1, 'Morgan');
-INSERT INTO pers_short VALUES (2, 'Kolk'); 
-INSERT INTO pers_short VALUES (3, 'Scott'); 
+INSERT INTO pers_short VALUES (1, 'kim');
+INSERT INTO pers_short VALUES (2, 'lee'); 
+INSERT INTO pers_short VALUES (3, 'choi'); 
 commit; 
 
 SELECT e.last_name,
