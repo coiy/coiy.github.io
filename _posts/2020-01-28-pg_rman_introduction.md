@@ -41,12 +41,14 @@ C언어로 작성되었기에 github 저장소에서 소스(raw source file)를 
 
 * checkpoint_timeout(디폴트 5min, 설정 가능한 값의 범위는 30s - 1d) 
 * max_wal_size(max 사이즈에 도달하면 wal 새그먼트 파일(디폴트 16MB의 파일, v12부터 initdb 단계에서 --wal-segsize 값을 MB단위로 지정하여 변경이 가능해짐)을 rename 후 재사용해야 하기 때문에 checkpoint를 발생시켜서 메모리 상의 변경내용을 영속적인 스토리지에 쓴다) 
-* checkpoint_completion_target : 
+* checkpoint_completion_target  
 * log_checkpoints(로그에 checkpoint 발생 관련 로그를 기록하도록 한다)
 
 ## CHECKPOINT가 발생하는 상황 
 * 사용자가 직접 checkpoint 명령어를 수행하거나 설정된 주기 및 특정 조건을 만족했을 때 checkpoint가 발생한다. 
+
 * pg_start_backup, pg_basebackup, CREATE DATABASE 구문 또는 pg_ctl stop|restart 수행할 시에도 checkpoint가 발생한다. 
+
 * checkpointer와 background writer라는 이름의 두 가지 프로세스가 checkpoint와 관계된 백그라운드 프로세스다.  
 
 # checkpoint_timeout의 텀은 어떻게 설정하는 것이 좋을까? 
@@ -120,3 +122,49 @@ cct 값을 크게 할수록 좋아 보이는데 단점(drawback)은 무엇일까
 
 ![memory_and_disk12](/assets/cct_ms_1.png)
 > pgbench 스케일 팩터 값으로 35를 주었을 때의 결과 그래프. (순간적으로 550MB 가량의 데이터 발생)
+
+
+# Base Backup 
+
+## logical backup
+* pg_dump & pg_restore
+* 데이터베이스가 클수록 시간이 오래 걸린다. 
+## physical backup
+* logical backup과 비교해서 데이터베이스를 백업하고 복원하는 데 걸리는 시간이 상대적으로 짧다. 
+
+|                 |SQL dump to an archive file: pg_dump -F c |SQL dump to a script file: pg_dump -F p or pg_dumpall | Filesystem backup using: pg_start_backup |
+| --------------------------- | ------------------------------------------------------------ |------- |------- |
+| 백업 타입  | Logical | Logical | Physical |
+| PITR  | 불가 | 불가 | 가능 |
+| Zero data loss  | No | No | Yes |
+| 모든 DB 백업  | 한번에 하나씩 | pg_dumpall 사용시 가능 | 가능 |
+| DB를 선택해 백업  | 가능 | 가능 | 불가 |
+| 증분(Incremental) 백업  | 불가 | 불가 | 가능 |
+| 백업 파일 압축  | 가능 | 가능 | 가능 |
+| 백업 파일 여러 개로 분할  | 불가 | 불가 | 가능 |
+| 병렬 백업  | 불가 | 불가 | 가능 |
+| 병렬 복구 | 가능 | 불가 | 가능 |
+| 백업 중에 DDL 허용  | 불가 | 불가 | 가능 |
+> quoted from [PostgreSQL 10 Administration CookBook](https://www.amazon.com/PostgreSQL-Administration-Cookbook-management-maintenance/dp/1788474929)
+
+## pg_start_backup
+1. 강제로 full-page write 모드로 전환시킨다. 
+2. 현재의 WAL 새그먼터 파일을 스위치한다. 
+3. checkpoint를 실행한다. 
+4. base directory 최상단 path에 backup_label를 생성한다. 
+
+## backup_label 파일에 담기는 정보 
+* CHECKPOINT LOCATION : pg_start_backup를 실행했을 때 발생한 체크포인트가 기록된 LSN 위치. 
+* START WAL LOCATION : PITR시에 사용되는 값은 아니고 SR시에 사용된다. 
+* BACKUP METHOD : 백업 방식에 대한 설명. pg_start_backup 또는 pg_basebackup 값을 갖는다. 
+* BACKUP FROM : 백업이 primary와 standby 중에 어디에서 발생했는지 기록한다. 
+* START TIME : pg_start_backup가 실행된 시간. 
+* LABEL : pg_start_backup 실행시 입력한 라벨 값. 
+* START TIMELINE : v11부터 도입되었고 백업 시작 시점의 타임라인 값을 기록한다. 
+
+## pg_stop_backup
+1. pg_start_backup 시점에 강제로 full-page write 모드로 변경되었다면 이를 non-full-page write로 재설정한다.  
+2. backup이 끝남을 알리는 XLOG를 쓴다. 
+3. WAL 새그먼트 파일을 스위치한다. 
+4. 백업 히스토리 파일 생성. 
+5. backup_label 파일 삭제. 
