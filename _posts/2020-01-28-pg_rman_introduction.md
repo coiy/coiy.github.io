@@ -132,7 +132,7 @@ cct 값을 크게 할수록 좋아 보이는데 단점(drawback)은 무엇일까
 ## physical backup
 * logical backup과 비교해서 데이터베이스를 백업하고 복원하는 데 걸리는 시간이 상대적으로 짧다. 
 
-|                 | SQL dump to an archive file: pg_dump -F c | SQL dump to a script file: pg_dump -F p or pg_dumpall | Filesystem backup using: pg_start_backup |
+| <img width=200px/>구분 | SQL dump to an archive file: pg_dump -F c | SQL dump to a script file: pg_dump -F p or pg_dumpall | Filesystem backup using: pg_start_backup |
 | --------------------------- | ------------------------------------------------------------ |------- |------- |
 | 백업 타입  | Logical | Logical | Physical |
 | PITR  | 불가 | 불가 | 가능 |
@@ -145,9 +145,24 @@ cct 값을 크게 할수록 좋아 보이는데 단점(drawback)은 무엇일까
 | 병렬 백업  | 불가 | 불가 | 가능 |
 | 병렬 복구 | 가능 | 불가 | 가능 |
 | 백업 중에 DDL 허용  | 불가 | 불가 | 가능 |
-| 
 
 > quoted from [PostgreSQL 10 Administration CookBook](https://www.amazon.com/PostgreSQL-Administration-Cookbook-management-maintenance/dp/1788474929)
+
+| <img width=200px/>구분 |                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 스킴                   | 어떤 프로토콜을 사용하는가? `http`, `https`,`ftp`, `rtsp`, `file` … 등등이 올 수 있다. 이어서 나오는 자원 정보가 어떤 프로토콜로 접근하는지 정의한다.                |
+| 사용자 이름, 비밀번호         | 공용 자원이 아닌 경우, 몇몇 프로토콜은 계정과 비밀번호를 요구하기도 한다. 예)FTP                                                                       |
+| 호스트                  | **서버** 를 뜻한다. naver.com, daum.net, google.com ...                                                                      |
+| 포트                   | 서버에 접근하기 위한 포트를 정의한다. 잘 알려진 포트의 경우 생략할 수 있다. (브라우저가 스킴을 보고 자동으로 붙여준다) HTTP는 80, HTTPS는 443, FTP는 21, SFTP는 22 ...      |
+| 경로                   | 호스트 내부에서 자원의 위치를 기술한다. 위에서 설명한 파일시스템과 유사한 방식이다. /baseball/kiwoom/1, /java/spring/starter ...                           |
+| 파라미터                 | 자원을 정의하기 위한 키 / 밸류 조합. FTP에서는 바이너리, 텍스트 포맷이 있다. `type`파라미터가 i인 경우 바이너리를, a 인 경우 ASCII 포맷이다. `ftp://foo.org/bar;type=i` |
+| 질의 (쿼리스트링)           | 자원의 형식을 구체화 하기 위해 질의를 포함할 수 있다. `naver.com/book/search?title=HTTP` 는 도서 리스트 중에서 `title`이 `HTTP` 인 것을 요청할 수 있다.         |
+| 프래그먼트                | HTML 문서의 위치를 설명한다. #[TITLE]은 TITLE 섹션을 의미한다.                                                                           |
+
+
+
+
+
 
 ## pg_start_backup
 1. 강제로 full-page write 모드로 전환시킨다. 
