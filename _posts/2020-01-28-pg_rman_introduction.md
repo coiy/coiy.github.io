@@ -132,7 +132,7 @@ cct 값을 크게 할수록 좋아 보이는데 단점(drawback)은 무엇일까
 ## physical backup
 * logical backup과 비교해서 데이터베이스를 백업하고 복원하는 데 걸리는 시간이 상대적으로 짧다. 
 
-|                 |SQL dump to an archive file: pg_dump -F c |SQL dump to a script file: pg_dump -F p or pg_dumpall | Filesystem backup using: pg_start_backup |
+|                 | SQL dump to an archive file: pg_dump -F c | SQL dump to a script file: pg_dump -F p or pg_dumpall | Filesystem backup using: pg_start_backup |
 | --------------------------- | ------------------------------------------------------------ |------- |------- |
 | 백업 타입  | Logical | Logical | Physical |
 | PITR  | 불가 | 불가 | 가능 |
@@ -145,6 +145,8 @@ cct 값을 크게 할수록 좋아 보이는데 단점(drawback)은 무엇일까
 | 병렬 백업  | 불가 | 불가 | 가능 |
 | 병렬 복구 | 가능 | 불가 | 가능 |
 | 백업 중에 DDL 허용  | 불가 | 불가 | 가능 |
+| 
+
 > quoted from [PostgreSQL 10 Administration CookBook](https://www.amazon.com/PostgreSQL-Administration-Cookbook-management-maintenance/dp/1788474929)
 
 ## pg_start_backup
