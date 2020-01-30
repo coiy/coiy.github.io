@@ -40,7 +40,7 @@ C언어로 작성되었기에 github 저장소에서 소스(raw source file)를 
 ## checkpoint와 관련된 주요 파라미터 
 
 * checkpoint_timeout(디폴트 5min, 설정 가능한 값의 범위는 30s - 1d) 
-* max_wal_size(max 사이즈에 도달하면 wal 새그먼트 파일(디폴트 16MB의 파일, v12부터 initdb 단계에서 --wal-segsize 값을 MB단위로 지정하여 변경이 가능해짐)을 rename 후 재사용해야 하기 때문에 checkpoint를 발생시켜서 메모리 상의 변경내용을 영속적인 스토리지에 쓴다) 
+* max_wal_size(max 사이즈에 도달하면 wal 새그먼트 파일(16진수 24자릿수로 된 디폴트 16MB의 파일, v12부터 initdb 단계에서 --wal-segsize 값을 MB단위로 지정하여 변경이 가능해짐)을 rename 후 재사용해야 하기 때문에 checkpoint를 발생시켜서 메모리 상의 변경내용을 영속적인 스토리지에 쓴다) 
 * checkpoint_completion_target  
 * log_checkpoints(로그에 checkpoint 발생 관련 로그를 기록하도록 한다)
 
