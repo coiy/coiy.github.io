@@ -209,7 +209,9 @@ recovery_target_time (if necessary)
 restore_command = 'cp /archive/arc_wal/%f %p'
 ```
 
+{ % youtube https://www.youtube.com/watch?v=QsSPwmm0-20 % }
+
 # timelineId 그리고 Timeline History File
 
 
-# PG_RMAN 소스 코드 분석 및 사용법 알아보기 
+# PG_RMAN의 소스 코드 분석 및 사용법 알아보기 
