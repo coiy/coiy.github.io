@@ -209,7 +209,8 @@ recovery_target_time (if necessary)
 restore_command = 'cp /archive/arc_wal/%f %p'
 ```
 
-{ % youtube https://www.youtube.com/watch?v=QsSPwmm0-20 % }
+{% include youtube_pg_rman.html id="QsSPwmm0-20" %}  
+> Magnus Hagander 씨의 PostgreSQL Backups the modern ways PT 참고. 
 
 # timelineId 그리고 Timeline History File
 
