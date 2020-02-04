@@ -232,6 +232,8 @@ PITR(Point In Time Recovery) 프로세스가 완료되면 "8자리로 된 새로
 * 복원하는 데 사용된 아카이브 로그의 타임라인ID
 * WAL 새그먼티 스위치가 발생한 LSN의 정보 
 * 타임라인ID가 변경된 이유 
+
+
 ```bash
 $ cat /archive/arc_wal/00000002.history
 1	  0/A000198	before 2020-1-31 12:05:00.861324+00
@@ -254,6 +256,7 @@ $ cat /archive/arc_wal/00000003.history
 * recovery_target_time = "2020-1-31 12:15:00 GMT"
 * recovery_target_timeline = 2
 
+
 1. backup_label 파일에서 checkpoint 위치(Redo Point)를 읽어온다. 
 2. recovery.conf(v12부터는 postgresql.(auto).conf) 파일에서 restore_command, recovery_target_time, and recovery_target_timeline 값들을 읽어온다. 
 3. 지정된 recovery_target_timeline 값에 해당하는 타임라인 히스토리 파일을 읽어들인다. 
@@ -275,13 +278,13 @@ $ cat /archive/arc_wal/00000003.history
 아래는 RHEL 리눅스 OS 7 버전 & PG 11버전용 PG_RMAN rpm 패키지 설치하는 과정이다.   
 
 1. PG_RMAN은 postgresql11-libs 라이브러리가 설치돼 있어서 하므로 커뮤니티 PG에서 제공하는 레드햇용 저장소 등록부터 한다.
-# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
 2. 저장소 등록을 마친 뒤 postgresql11-libs를 설치한다. (EDB 11 버전을 대상으로 하기에 postgresql11-libs를 설치한다)
-# yum install -y postgresql11-libs
+yum install -y postgresql11-libs
 
 3. PG_RMAN rpm을 설치한다. 
-# yum install -y https://github.com/ossc-db/pg_rman/releases/download/V1.3.9/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm
+yum install -y https://github.com/ossc-db/pg_rman/releases/download/V1.3.9/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm
 
 yum install -y https://github.com/ossc-db/pg_rman/releases/download/V1.3.9/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm
 Loaded plugins: fastestmirror, ovl
@@ -329,7 +332,7 @@ drwxr-xr-x 2 root root   4096 Feb  3 11:21 .
 drwxr-xr-x 5 root root   4096 Feb  3 11:21 ..
 -rwxr-xr-x 1 root root 160064 Oct 28 17:46 pg_rman
 
-# cp -p /usr/pgsql-11/bin/pg_rman /usr/edb/as11/bin
+[root@EFM_EDB_11_master /]# cp -p /usr/pgsql-11/bin/pg_rman /usr/edb/as11/bin
 ```
 
 ## 사용법 
@@ -342,10 +345,9 @@ pg_rman [ OPTIONS ] { init |
                       delete DATE |
                       purge }
 
-```
 
 
-```bash 
+
 pg_rman은 아카이브 모드 사용을 전제하기 때문에 archive_mode -> on, archive_command -> 적절히 설정하고나서 진행해야 한다. 다만 pg_rman에서 내부적으로 postgresql.conf에 정의된 archive_command의 디렉토리 path를 가져오도록 돼 있기 때문에 아카이브 관련 설정은 postgresql.auto.conf가 아니라 postgresql.conf 파일에 해둔다. 
 
 pg_hba.conf
