@@ -60,6 +60,7 @@ edb=# COMMIT;
 * pg_start_backup, pg_basebackup, CREATE DATABASE 구문 또는 pg_ctl stop|restart 수행할 시에도 checkpoint가 발생한다. 
 * checkpointer와 background writer라는 이름의 두 가지 프로세스가 checkpoint와 관계된 백그라운드 프로세스다.  
 
+
 ## checkpoint_timeout의 텀은 어떻게 설정하는 것이 적절한가. 
 9.6 이전 버전까지는 퍼포먼스 관점에서 checkpoint_timeout의 텀을 짧게 설정하는 것을 권고하는 경향이 있었는데 그 이후 버전부터는 DB 내부의 최적화 로직이 개선되고 OS 레벨에서의 속도 개선도 더해져서 과거보다 텀을 길게 설정하는 것을 권고하고 있다. Mastering PostgreSQL 11의 저자이자 Cybertec이라는 PG 벤더사의 CEO인 Hans-Jurgen Schonig 씨에 따르면 9.6 버전 이후부터는 기본적으로 checkpoint 발생 텀을 길게 가져가는 것(30min)이 [바람직하다고 주장한다](https://www.cybertec-postgresql.com/en/checkpoint-distance-and-amount-of-wal). checkpoint 텀이 길수록 full-page writes가 덜 발생하고 그렇다는 것은 WAL 발생이 준다는 것을 의미하기 때문에 I/O 퍼포먼스 관점에서 좋다는 주장이다.   
 
@@ -231,7 +232,7 @@ PITR(Point In Time Recovery) 프로세스가 완료되면 "8자리로 된 새로
 * 복원하는 데 사용된 아카이브 로그의 타임라인ID
 * WAL 새그먼티 스위치가 발생한 LSN의 정보 
 * 타임라인ID가 변경된 이유 
-```
+```bash
 $ cat /archive/arc_wal/00000002.history
 1	  0/A000198	before 2020-1-31 12:05:00.861324+00
 
@@ -241,7 +242,6 @@ $ cat /archive/arc_wal/00000003.history
 1	0/13000000	no recovery target specified
 
 2	0/21000000	before 2020-1-31 12:05:00.861324+00
-
 ```
 
 00000003.history 파일이 저장한 정보가 의미하는 바는 타임라인ID 값으로 3을 가진 이 데이터베이스 클러스터는 타임라인ID 1과 2를 베이스로 하고 있으며 2020-1-31 12:05:00.861324+00 바로 직전까지 복원하기 위해 0/21000000까지 로그 리플레이를 진행했다는 것이다. 
@@ -254,7 +254,7 @@ $ cat /archive/arc_wal/00000003.history
 * recovery_target_time = "2020-1-31 12:15:00 GMT"
 * recovery_target_timeline = 2
 
-1. backup_label 파일에서 checkpoint 위치를 읽어온다. 
+1. backup_label 파일에서 checkpoint 위치(Redo Point)를 읽어온다. 
 2. recovery.conf(v12부터는 postgresql.(auto).conf) 파일에서 restore_command, recovery_target_time, and recovery_target_timeline 값들을 읽어온다. 
 3. 지정된 recovery_target_timeline 값에 해당하는 타임라인 히스토리 파일을 읽어들인다. 
 4. Redo Point부터 히스토리2 파일에 명시된 LSN 0/A000198 까지 타임라인ID 값이 1인 아카이브 로그를 가지고 리플레이를 진행한다. 
@@ -263,3 +263,129 @@ $ cat /archive/arc_wal/00000003.history
 
 
 # PG_RMAN의 소스 코드 분석 및 사용법 알아보기 
+
+깃헙에 공개된 소스의 히스토리에 따르면 2009년 12월 일본의 NTT 오픈소스 관련 소프트웨어 연구소 소속의 엔지니어 타카히로 이타가키 씨의 [initial 커밋](https://github.com/ossc-db/pg_rman/tree/ae1ad6fff627bb7c7a8342a6b7d30f5f2259eaf2)을 시작으로 오늘날까지 유지•보수되고 있는 PG용 백업 솔루션이다.      
+
+그 이름에서 유추해볼 수 있듯이 오라클의 RMAN과 유사한 인터페이스를 제공한다. RMAN식의 백업을 사실상의 표준방식(de facto standard)으로 인식하고 있는 DB업계의 많은 DBA들 중에 오라클 중심의 RDBMS 경험에서 탈피하고자 PG에 진입한 엔지니어에게 RMAN과 유사한 인터페이스를 제공함으로써 진입 문턱을 낮췄다는 점에서 소스 코드를 살펴보며 그 작동 원리를 가능하면 자세히 살펴볼 필요가 있다고 판단했다. 
+
+## 설치 
+깃헙 저장소에서 소스 코드를 직접 받아서 컴파일을 거쳐 설치할 수도 있지만 의존적인 패키지의 부재 문제로 설치가 어려울 수도 있다. 레드햇 계열 리눅스 OS에서 사용가능한 [RPM 패키지를 제공](https://github.com/ossc-db/pg_rman/releases)하고 있기 때문에 해당 OS 사용자는 RPM 패키지로 설치하는 편을 `추천`한다.        
+
+```bash 
+아래는 RHEL 리눅스 OS 7 버전 & PG 11버전용 PG_RMAN rpm 패키지 설치하는 과정이다.   
+
+1. PG_RMAN은 postgresql11-libs 라이브러리가 설치돼 있어서 하므로 커뮤니티 PG에서 제공하는 레드햇용 저장소 등록부터 한다.
+# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+2. 저장소 등록을 마친 뒤 postgresql11-libs를 설치한다. (EDB 11 버전을 대상으로 하기에 postgresql11-libs를 설치한다)
+# yum install -y postgresql11-libs
+
+3. PG_RMAN rpm을 설치한다. 
+# yum install -y https://github.com/ossc-db/pg_rman/releases/download/V1.3.9/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm
+
+yum install -y https://github.com/ossc-db/pg_rman/releases/download/V1.3.9/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm
+Loaded plugins: fastestmirror, ovl
+pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm                                                                        |  74 kB  00:00:00
+Examining /var/tmp/yum-root-s56YUg/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm: pg_rman-1.3.9-1.pg11.rhel7.x86_64
+Marking /var/tmp/yum-root-s56YUg/pg_rman-1.3.9-1.pg11.rhel7.x86_64.rpm to be installed
+Resolving Dependencies
+--> Running transaction check
+---> Package pg_rman.x86_64 0:1.3.9-1.pg11.rhel7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+====================================================================================================================================
+ Package               Arch                 Version                          Repository                                        Size
+====================================================================================================================================
+Installing:
+ pg_rman               x86_64               1.3.9-1.pg11.rhel7               /pg_rman-1.3.9-1.pg11.rhel7.x86_64               156 k
+
+Transaction Summary
+====================================================================================================================================
+Install  1 Package
+
+Total size: 156 k
+Installed size: 156 k
+Downloading packages:
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : pg_rman-1.3.9-1.pg11.rhel7.x86_64                                                                                1/1
+  Verifying  : pg_rman-1.3.9-1.pg11.rhel7.x86_64                                                                                1/1
+
+Installed:
+  pg_rman.x86_64 0:1.3.9-1.pg11.rhel7
+
+Complete!
+[root@EFM_EDB_11_master /]#
+
+4. 설치에 성공하면 pg_rman 파일은 커뮤니티 PG의 유틸리티가 저장되는 디폴트 디렉토리에 만들어져 있다. EDB 11 버전에서 pg_rman을 사용하려면 /usr/edb/as11/bin (EDB 11 버전의 디폴트 bin 디렉토리)로 이 파일을 옮겨두는 것을 추천한다.
+
+[root@EFM_EDB_11_master /]# ls -al /usr/pgsql-11/bin
+total 168
+drwxr-xr-x 2 root root   4096 Feb  3 11:21 .
+drwxr-xr-x 5 root root   4096 Feb  3 11:21 ..
+-rwxr-xr-x 1 root root 160064 Oct 28 17:46 pg_rman
+
+# cp -p /usr/pgsql-11/bin/pg_rman /usr/edb/as11/bin
+```
+
+## 사용법 
+```bash
+pg_rman [ OPTIONS ] { init |
+                      backup |
+                      restore |
+                      show [ DATE | detail ] |
+                      validate [ DATE ] |
+                      delete DATE |
+                      purge }
+
+```
+
+
+```bash 
+pg_rman은 아카이브 모드 사용을 전제하기 때문에 archive_mode -> on, archive_command -> 적절히 설정하고나서 진행해야 한다. 다만 pg_rman에서 내부적으로 postgresql.conf에 정의된 archive_command의 디렉토리 path를 가져오도록 돼 있기 때문에 아카이브 관련 설정은 postgresql.auto.conf가 아니라 postgresql.conf 파일에 해둔다. 
+
+pg_hba.conf
+
+
+환경변수도 설정한다. 
+PGDATA=/var/lib/pgsql/11/data
+PG_CONFIG=/usr/edb/as11/bin/pg_config
+BACKUP_PATH=/pg_rman
+ARCLOG_PATH=/archive/arc_wal
+
+[enterprisedb@EFM_EDB_11_master data]$ pg_rman init -B /pg_rman -D /var/lib/edb/as11/data -S /var/lib/edb/as11/data/log
+INFO: ARCLOG_PATH is set to '/archive/arc_wal'
+INFO: SRVLOG_PATH is set to '/var/lib/edb/as11/data/log'
+
+# full backup method
+[enterprisedb@EFM_EDB_11_master data]$ pg_rman backup -D /var/lib/edb/as11/data --backup-mode=full -h 172.17.0.2 -p 5444 -d edb -U enterprisedb -v -P -s
+INFO: copying database files
+INFO: copying archived WAL files
+INFO: backup complete
+INFO: Please execute 'pg_rman validate' to verify the files are correctly copied.
+
+# incremental backup method 
+[enterprisedb@EFM_EDB_11_master data]$ pg_rman backup -D /var/lib/edb/as11/data --backup-mode=incremental -h 172.17.0.2 -p 5444 -d edb -U enterprisedb -v -P -s
+
+# 백업 상세 내역 확인하기 
+[enterprisedb@EFM_EDB_11_master data]$ pg_rman show detail 
+
+# 복원과정은 1. stop 2. restore 3. 재시작
+[enterprisedb@EFM_EDB_11_master data]$ pg_ctl stop -D $PGDATA -m immediate 
+[enterprisedb@EFM_EDB_11_master data]$ pg_rman restore
+
+restore_command = 'cp /archive/arc_wal/%f %p'
+recovery_target_timeline = '1'
+or 
+recovery_target_time = '03-FEB-20 16:40:26.258447 +09:00'
+
+pg_rman restore --recovery-target-time '03-FEB-20 16:40:26.258447 +09:00'
+[enterprisedb@EFM_EDB_11_master data]$ pg_ctl start -D $PGDATA
+```
+
+## backup-mode가 full일 때와 incremental 때의 소스 코드 분석 
+
