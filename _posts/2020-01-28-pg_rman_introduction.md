@@ -128,7 +128,7 @@ pgbench 스케일 팩터 값은 15였고 생성된 데이터의 크기는 약 30
 ## cct 값을 크게 할수록 좋기만 한 것일까. 단점(drawback)은 무엇일까? 
 * wal 새그먼트를 저장하는 pg_wal(v10 이전에는 pg_xlog)가 비대해질 수 있다. 
 * 항상 기대한대로 동작하는 것은 아니다. share_buffers의 크기가 매우 크고 쓰기 작업이 많은 시스템에서는 아래 그림처럼 체크포인트가 거의 항시 발생한다.
-* 체크포인트 텀이 길어질수록 강제로 종료된 상황이나 재기동 시에 수행되는 리커버리 과정에 시간이 더 오래 걸릴 수 있음(REDOPOINT에 뒤에 있기 때문)을 인지하고 있어야 한다.   
+* 체크포인트 텀이 길어질수록 강제로 종료된 상황이나 재기동 시에 수행되는 리커버리 과정에 시간이 더 오래 걸릴 수 있음(REDOPOINT가 뒤에 있기 때문)을 인지하고 있어야 한다.   
 
 ![memory_and_disk12](/assets/cct_ms_1.png)
 > pgbench 스케일 팩터 값으로 35를 주었을 때의 결과 그래프. (순간적으로 550MB 가량의 데이터 발생)
@@ -389,5 +389,219 @@ pg_rman restore --recovery-target-time '03-FEB-20 16:40:26.258447 +09:00'
 [enterprisedb@EFM_EDB_11_master data]$ pg_ctl start -D $PGDATA
 ```
 
-## backup-mode가 full일 때와 incremental 때의 소스 코드 분석 
+## backup 모드로 백업을 취득 할 때 실행되는 로직의 큰 흐름  
+pg_rman.c 소스파일의 main 함수를 보면 첫 단계에서 pg_rman을 실행했을 때 유저가 입력한 커맨드를(init, backup, restore, show, validate, delete 등) 먼저 읽어들이고 필수 입력값(BACKUP_PATH 등)의 입력 여부를 체크하는 로직이 시작된다.
 
+```c
+if (backup_path == NULL)
+		ereport(ERROR,
+			(errcode(ERROR_ARGS),
+			 errmsg("required parameter not specified: BACKUP_PATH (-B, --backup-path)")));
+
+	for (; i < argc; i++)
+	{
+		if (cmd == NULL)
+			cmd = argv[i];
+		else if (pg_strcasecmp(argv[i], "detail") == 0 &&
+				 pg_strcasecmp(cmd, "show") == 0)
+			show_detail = true;
+		else if (range1 == NULL)
+			range1 = argv[i];
+		else if (range2 == NULL)
+			range2 = argv[i];
+		else
+			ereport(ERROR,
+				(errcode(ERROR_ARGS),
+				 errmsg("too many arguments")));
+	}
+
+	/* command argument (backup/restore/show/...) is required. */
+	if (cmd == NULL)
+	{
+		help(false);
+		return HELP;
+	}
+
+if (backup_path)
+	{
+		char	path[MAXPGPATH];
+		/* Check if backup_path is directory. */
+		struct stat stat_buf;
+		int rc = stat(backup_path, &stat_buf);
+
+		/* If rc == -1,  there is no file or directory. So it's OK. */
+		if(rc != -1 && !S_ISDIR(stat_buf.st_mode))
+			ereport(ERROR,
+				(errcode(ERROR_ARGS),
+				 errmsg("-B, --backup-path must be a path to directory")));
+
+		join_path_components(path, backup_path, PG_RMAN_INI_FILE);
+		pgut_readopt(path, options, ERROR_ARGS);
+	}
+```
+
+입력되었어야 할 값들에 대한 필터링이 끝나면 206행부터 본격적으로 유저가 지정한 pg_rman 커맨드에 따라 do_라는 접두어로 네이밍된 해당 함수가 호출되도록 구성된 로직이 동작하는 것을 끝으로 main 함수가 종료된다.  
+
+```c
+/* do actual operation */
+	if (pg_strcasecmp(cmd, "init") == 0)
+		return do_init();
+	else if (pg_strcasecmp(cmd, "backup") == 0)
+	{
+		pgBackupOption bkupopt;
+		bkupopt.smooth_checkpoint	    = smooth_checkpoint;
+		bkupopt.keep_arclog_files	    = keep_arclog_files;
+		bkupopt.keep_arclog_days	    = keep_arclog_days;
+		bkupopt.keep_srvlog_files	    = keep_srvlog_files;
+		bkupopt.keep_srvlog_days	    = keep_srvlog_days;
+		bkupopt.keep_data_generations	= keep_data_generations;
+		bkupopt.keep_data_days		    = keep_data_days;
+		bkupopt.standby_host		    = standby_host;
+		bkupopt.standby_port		    = standby_port;
+		return do_backup(bkupopt);
+	}
+	else if (pg_strcasecmp(cmd, "restore") == 0)
+		return do_restore(target_time, target_xid,
+					target_inclusive, target_tli_string, is_hard_copy);
+	else if (pg_strcasecmp(cmd, "show") == 0)
+		return do_show(&range, show_detail, show_all);
+	else if (pg_strcasecmp(cmd, "validate") == 0)
+		return do_validate(&range);
+	else if (pg_strcasecmp(cmd, "delete") == 0)
+		return do_delete(&range, force);
+	else if (pg_strcasecmp(cmd, "purge") == 0)
+		return do_purge();
+	else
+		ereport(ERROR,
+			(errcode(ERROR_ARGS),
+			 errmsg("invalid command \"%s\"", cmd)));
+
+	return 0;
+```
+
+## backup 커맨드가 호출된 이후 do_backup의 내부 로직
+backup.c 파일이 backup 커맨드가 선택되었을 때 실행되는 로직을 담고 있다. bkupopt 변수에 담겨 넘어온 옵션값들을 함수 내부에서 리패킹하고 필수 옵션 값들의 유무를 확인하는 로직부터 시작한다. 필터링 과정이 끝나면 966행부터 data directory, 아카이브 WAL, 서버 로그를 백업하는 로직이 등장한다. 
+```c
+    /* backup data */
+	files_database = do_backup_database(backup_list, bkupopt);
+
+	/* backup archived WAL */
+	files_arclog = do_backup_arclog(backup_list);
+
+	/* backup serverlog */
+	files_srvlog = do_backup_srvlog(backup_list);
+
+```
+
+do_backup_database 함수의 정의는 backup.c 파일의 80행부터 나온다. 이 함수에서도 내부적으로 필수 입력값의 유무를 체크한 다음 pg_start_backup이라는 함수가 호출되는 로직이다. (start 이후 데이터 파일을 백업하는 로직이 끝나면 265행에서 pg_stop_backup이 실행된다) 
+
+```c
+    /* notify start of backup to PostgreSQL server */
+	time2iso(label, lengthof(label), current.start_time);
+	strncat(label, " with pg_rman", lengthof(label));
+	pg_start_backup(label, smooth_checkpoint, &current);
+```
+
+## pg_start_backup
+```c
+pg_start_backup(const char *label, bool smooth, pgBackup *backup)
+{
+	PGresult	   *res;
+	const char	   *params[3];
+	params[0] = label;
+
+	elog(DEBUG, "executing pg_start_backup()");
+
+	/*
+	 * Establish new connection to send backup control commands.  The same
+	 * connection is used until the current backup finishes which is required
+	 * with the new non-exclusive backup API as of PG version 9.6.
+	 */
+	reconnect();
+
+	/* Assumes PG version >= 8.4 */
+
+	/* 2nd argument is 'fast' (IOW, !smooth) */
+	params[1] = smooth ? "false" : "true";
+
+	/* 3rd argument is 'exclusive' (assumes PG version >= 9.6) */
+	params[2] = "false";
+	res = execute("SELECT * from pg_walfile_name_offset(pg_start_backup($1, $2, $3))", 3, params);
+
+	if (backup != NULL)
+		get_lsn(res, &backup->tli, &backup->start_lsn);
+
+	elog(DEBUG, "backup start point is (WAL file: %s, xrecoff: %s)",
+			PQgetvalue(res, 0, 0), PQgetvalue(res, 0, 1));
+
+	PQclear(res);
+}
+```
+
+## pg_stop_backup 
+```c
+static parray *
+pg_stop_backup(pgBackup *backup)
+{
+	parray		   *result = parray_new();
+	pgFile		   *file;
+	PGresult	   *res;
+	char		   *backup_lsn;
+	char		   *backuplabel = NULL;
+	int				backuplabel_len;
+	char		   *tblspcmap = NULL;
+	int				tblspcmap_len;
+	const char	   *params[1];
+
+	elog(DEBUG, "executing pg_stop_backup()");
+
+	/*
+	 * Non-exclusive backup requires to use same connection as the one
+	 * used to issue pg_start_backup().  Remember we did not disconnect
+	 * in pg_start_backup() nor did we lose our connection when issuing
+	 * commands to standby.
+	 */
+	Assert(connection != NULL);
+
+	/* Remove annoying NOTICE messages generated by backend */
+	res = execute("SET client_min_messages = warning;", 0, NULL);
+	PQclear(res);
+
+	params[0] = "false";
+	res = execute("SELECT * FROM pg_stop_backup($1)", 1, params);
+
+	if (res == NULL || PQntuples(res) != 1 || PQnfields(res) != 3)
+		ereport(ERROR,
+			(errcode(ERROR_PG_COMMAND),
+			 errmsg("result of pg_stop_backup($1) is invalid: %s",
+				PQerrorMessage(connection))));
+
+	backup_lsn = PQgetvalue(res, 0, 0);
+	backuplabel = PQgetvalue(res, 0, 1);
+	backuplabel_len = PQgetlength(res, 0, 1);
+	tblspcmap = PQgetvalue(res, 0, 2);
+	tblspcmap_len = PQgetlength(res, 0, 2);
+
+	Assert(backuplabel_len > 0);
+	file = write_stop_backup_file(backup, backuplabel, backuplabel_len,
+								  PG_BACKUP_LABEL_FILE);
+	parray_append(result, (void *) file);
+
+	if (tblspcmap_len > 0)
+	{
+		file = write_stop_backup_file(backup, tblspcmap, tblspcmap_len,
+									  PG_TBLSPC_MAP_FILE);
+		parray_append(result, (void *) file);
+	}
+
+	params[0] = backup_lsn;
+	wait_for_archive(backup,
+		"SELECT * FROM pg_walfile_name_offset($1)",
+		1, params);
+
+	/* Done with the connection. */
+	disconnect();
+
+	return result;
+}
+```
