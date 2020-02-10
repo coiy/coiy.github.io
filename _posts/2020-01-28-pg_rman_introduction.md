@@ -149,12 +149,14 @@ pgbench 스케일 팩터 값은 15였고 생성된 데이터의 크기는 약 30
 | Zero data loss  | No | No | Yes |
 | 모든 DB 백업  | 한번에 하나씩 | pg_dumpall 사용시 가능 | 가능 |
 | DB를 선택해 백업  | 가능 | 가능 | 불가 |
-| 증분(Incremental) 백업  | 불가 | 불가 | 가능 |
+| 증분(Incremental) 백업  | 불가 | 불가 | 가능[^1]|
 | 백업 파일 압축  | 가능 | 가능 | 가능 |
 | 백업 파일 여러 개로 분할  | 불가 | 불가 | 가능 |
 | 병렬 백업  | 불가 | 불가 | 가능 |
 | 병렬 복구 | 가능 | 불가 | 가능 |
 | 백업 중에 DDL 허용  | 불가 | 불가 | 가능 |
+
+[^1]: 네이티브 API인 pg_start_backup 호출만으로는 불가능하고 이 API를 기반으로 만들어진 써드파티 솔루션인 EDB사의 BART나 2ndQuadrant사의 BARMAN 또는 PG_RMAN 등을 사용하면 가능.   
 
 > quoted from [PostgreSQL 10 Administration CookBook](https://www.amazon.com/PostgreSQL-Administration-Cookbook-management-maintenance/dp/1788474929)
 
