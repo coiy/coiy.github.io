@@ -13,7 +13,7 @@ comments: false
 
 C언어로 작성되었기에 github 저장소에서 소스(raw source file)를 내려받아서 설치하려면 컴파일이 필요하다. 레드햇 패밀리 계열 리눅스 OS 플랫폼을 대상으로는 PG 버전별로 [패키지 파일을 제공](https://github.com/ossc-db/pg_rman/releases/)하기에 직접 컴파일하여 설치하는 것보다는 자신의 환경에 맞는 패키지 파일을 받아서 설치하는 편을 추천한다. 디폴트 설치 경로는 PG의 각종 유틸리티가 존재하는 /usr/pgsql-1*/bin이다. 따라서 pg_rman을 edb에 도입한다면 /usr/edb/as1*/bin로 pg_rman을 옮겨둘 필요가 있다.             
 
-유사한 기능을 제공하는 백업&복구 솔루션으로 EDB에서 제공하는 것으로는 BART, 오픈소스 방식으로 2ndQuadrant에서 유지•보수하는 BARMAN이 있다. 근간이 되는 백업&복구의 기본개념은 닮아 있다. 그 외에도 [OmniPITR](https://github.com/omniti-labs/omnipitr), [PgBackRest](https://pgbackrest.org), [PgHoard](https://github.com/aiven/pghoard), [WAL-E](https://github.com/wal-e/wal-e) 등이 있는데 WAL-E는 최근 2~3년 동안 maintaining이 이뤄지지 않고 있다.   
+유사한 기능을 제공하는 백업&복구 솔루션으로 EDB에서 제공하는 것으로는 [BART](https://www.enterprisedb.com/edb-docs/d/edb-backup-and-recovery-tool/user-guides/backup-recovery-guide/2.5.2/index.html), 오픈소스 방식으로 2ndQuadrant에서 유지•보수하는 [BARMAN](https://www.pgbarman.org/index.html)이 있다. 근간이 되는 백업&복구의 기본개념은 닮아 있다. 그 외에도 [OmniPITR](https://github.com/omniti-labs/omnipitr), [PgBackRest](https://pgbackrest.org), [PgHoard](https://github.com/aiven/pghoard), [WAL-E](https://github.com/wal-e/wal-e) 등이 있는데 WAL-E는 최근 2~3년 동안 maintaining이 이뤄지지 않고 있다.   
 
 백업 솔루션의 구체적인 사용법을 익히기 전에 DML 트랜잭션이 발생하면 그 내용(커밋 내용, 인덱스 포인트 정보, 체크섬 등을 포함한 해당 오퍼레이션의 다양한 정보)이 처리되는 과정을 복습하고 checkpoint, timeline 같은 개념을 되새본 뒤에 pg_rman 사용법을 익히는 과정으로 나아가자.  
 
@@ -149,14 +149,14 @@ pgbench 스케일 팩터 값은 15였고 생성된 데이터의 크기는 약 30
 | Zero data loss  | No | No | Yes |
 | 모든 DB 백업  | 한번에 하나씩 | pg_dumpall 사용시 가능 | 가능 |
 | DB를 선택해 백업  | 가능 | 가능 | 불가 |
-| 증분(Incremental) 백업  | 불가 | 불가 | 가능[^각주1]|
+| 증분(Incremental) 백업  | 불가 | 불가 | 가능[^1]|
 | 백업 파일 압축  | 가능 | 가능 | 가능 |
 | 백업 파일 여러 개로 분할  | 불가 | 불가 | 가능 |
 | 병렬 백업  | 불가 | 불가 | 가능 |
 | 병렬 복구 | 가능 | 불가 | 가능 |
 | 백업 중에 DDL 허용  | 불가 | 불가 | 가능 |
 
-[^각주1]: 네이티브 API인 pg_start_backup 호출만으로는 불가능하고 이 API를 기반으로 만들어진 써드파티 백업솔루션인 EDB사의 BART나 2ndQuadrant사의 BARMAN 또는 PG_RMAN 등을 사용하면 가능.   
+[^1]: PG의 네이티브 백업 API인 pg_start_backup 함수 호출만으로는 불가능하고 이 API를 기반으로 만들어진 써드파티 백업솔루션인 EDB사의 BART나 2ndQuadrant사의 BARMAN 또는 PG_RMAN 등을 사용하면 가능.   
 
 > quoted from [PostgreSQL 10 Administration CookBook](https://www.amazon.com/PostgreSQL-Administration-Cookbook-management-maintenance/dp/1788474929)
 
