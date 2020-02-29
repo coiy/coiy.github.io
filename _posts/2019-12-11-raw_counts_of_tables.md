@@ -7,7 +7,7 @@ comments: false
 ---
 
 PG & EDB에서 통계 정보가 가지고 있는 테이블에서 row count를 가져오는 것이 아니라 테이블의 exact row count를 알아내는 방법이다. 
-먼저 내부에 select count(1) 구문이 포함돼 있는 count_rows라는 함수를 만들어둔다. 
+먼저 내부에 select count(1) 구문이 포함돼 있는 count_rows라는 함수를 만든다. 
 
 ```sql
 create or replace function 
