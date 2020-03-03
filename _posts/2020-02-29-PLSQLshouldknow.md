@@ -69,6 +69,11 @@ END;
 * BOOLEAN
 * Composite 타입 (RECORD, TABLE, VARRAY 등)
 
+## 사용 가능한 구문 
+* 조건문 (IF ELSIF ELSE END IF;)
+* CASE문 (CASE WHEN ... THEN END CASE;)
+* LOOP문
+
 ## %TYPE, %ROWTYPE 속성 
 PL/SQL을 사용하다보면 테이블에서 검색한 데이터를 직접 변수에 대입하는 경우가 자주 있는데 오라클의 데이터를 직접 취급하는 경우에 대응하는 변수를 %TYPE, %ROWTYPE으로 정의하면 매우 편리하다. 
 
@@ -104,12 +109,133 @@ BEGIN
 
 
 ## 익명 블록 (PL/SQL anonymous block)
+```sql
+<<label>>   -- this is optional
+DECLARE
+-- this section is optional
+  number1 NUMBER(2);
+  number2 number1%TYPE := 17;             -- value default
+  text1   VARCHAR2(12) := 'Hello world';
+  text2   DATE         := SYSDATE;        -- current date and time
+BEGIN
+-- this section is mandatory, must contain at least one executable statement
+  SELECT street_number
+    INTO number1
+    FROM address
+    WHERE name = 'INU';
+EXCEPTION
+-- this section is optional
+   WHEN OTHERS THEN
+     DBMS_OUTPUT.PUT_LINE('Error Code is ' || TO_CHAR(sqlcode));
+     DBMS_OUTPUT.PUT_LINE('Error Message is ' || sqlerrm);
+END;
+```
+* DECLARE, BEGIN, EXCEPTION, END 키워드로 이루어져 있으며 각 키워드는 선언부, 실행부, 예외처리부분을 담당하는 블록으로 구성돼 있다. 
+* 초기값을 지정하지 않은 변수는 NULL 값이 디폴드로 들어간다. 
+* `:=`는 대입 연산자다. 
 
 ## 함수 (Function)
+```sql 
+CREATE OR REPLACE FUNCTION <function_name> [(input/output variable declarations)] RETURN return_type
+[AUTHID <CURRENT_USER | DEFINER>] <IS|AS>   -- heading part
+amount number;   -- declaration block
+BEGIN   -- executable part
+	<PL/SQL block with return statement>
+        RETURN <return_value>;
+[Exception
+	none]
+        RETURN <return_value>;
+END;
+```
+* 함수는 어떤 연산을 거치고나서 단일한 값(single value)을 반환(return)하려는 목적에서 쓰인다. 
+* 반환 값으로는 숫자, 날짜, 문자열 같은 스칼라 값이 될 수도 있고 nested 테이블이나 배열 같은 단일 컬렉션(single collection)이 될 수도 있다. 
+* 함수는 SQL문 내에서 실행 가능하다. 오라클 내장함수인 SYSDATE, LENGTHB 같은 것을 사용하는 SQL문이 그런 경우다. (이 점이 프로시저와 가장 크게 다른 점이기도 하다.)
 
 ## 프로시저 (Procedure)
+```sql 
+CREATE PROCEDURE create_email_address ( -- Procedure heading part begins
+    name1 VARCHAR2,
+    name2 VARCHAR2,
+    company VARCHAR2,
+    email OUT VARCHAR2
+) -- Procedure heading part ends
+AS
+-- Declarative part begins (optional)
+error_message VARCHAR2(30) := 'Email address is too long.';
+BEGIN -- Executable part begins (mandatory)
+    email := name1 || '.' || name2 || '@' || company;
+EXCEPTION -- Exception-handling part begins (optional)
+WHEN VALUE_ERROR THEN
+    DBMS_OUTPUT.PUT_LINE(error_message);
+END create_email_address;
+```
+* 프로그램 유닛의 이름이 가지고 있어서 반복해서 호출될 수 있다는 점에서는 함수와 비슷하지만 SQL 구문 내에서 사용될 수 없다는 점에서 다르다.   
+* 함수는 단일한 값을 반환하는 반면에 프로시저는 다수의 값(multiple)을 반환할 수 있다. 
+
+### 프로시저의 파라미터 모드 (IN, OUT, IN OUT)
+* IN 모드는 디폴드 모드로 참조 값을 통해서 IN 파라미터 변수에 대입된다. 
+* OUT 모드는 프로그램이 종료되는 시점에 파라미터에 대입된 값이 호출된 프로그램으로 반환된다. 
+```sql 
+CREATE OR REPLACE PROCEDURE triangle(
+    base    IN  NUMBER DEFAULT 10,
+    height  IN  NUMBER DEFAULT 20, 
+    area    OUT NUMBER
+)
+IS 
+BEGIN 
+    area := (base * height) / 2
+END;
+/
+```
+* IN OUT 모드는 하나의 파라미터가 IN과 OUT 모두의 역할은 하는 것이다. 
+
+## 함수와 프로시저의 차이 
+
+|  | 프로시저 | 함수 | 
+| --------------------------- | ------- |------- |
+|반환값의 수  | 복수 | 하나 | 
+|반환값 지정  | OUT, IN OUT 파라미터 | RETURN 구문 |
+|파라미터 모드  | IN, OUT, IN OUT | IN |
+|SQL문에서의 사용 가능 | 불가 | 가능 |
+|트랜잭션 제어 (COMMIT 등) | 가능 | 불가 |
+|변경 처리 (DML) | 가능 | 불가 |
+
+## 의존성 문제 
+![plsql5](/assets/plsql5.png)
+
+프로시저 proc1은 함수 func1를 호출하고 함수 func1은 테이블 tab1를 참조하는 상황에서 각 오브젝트 간에 의존-참조 관계가 형성된다. 오라클에서는 USER/ALL/DBA_DEPENDENCIES 딕셔너리 뷰를 조회하여 의존 관계를 확인하고 의존 관계가 깨진(INVALID) 오브젝트에 대해서는 USER/ALL/DBA_OBJECTS의 STATUS 컬럼을 조회해봄으로써 재컴파일 필요성 여부를 점검하게 된다. 
+
+```sql 
+# 수동으로 다시 컴파일 하는 경우 
+ALTER <오브젝트 종류> <오브젝트 명> COMPILE; 
+ALTER PROCEDURE pro1 COMPILE; 
+```
 
 ## 패키지 (Package)
- 
+ ![plsql4](/assets/plsql4.png)
+* 함수, 프로시저, 변수 등을 개념적으로 연결하여 그룹으로 만든 것이다. 
+* 프로시저나 함수와는 다르게 사양(specification)을 기술하는 부분과 본체(body)로 나누어 기술해야 한다. 
+* 캡슐화/비즈니스 로직을 감출 수 있다. 
+* 퍼포먼스 향상, 재사용성 높음 
+```sql 
+#Package Specification
+PROCEDURE pro_a (a_para VARCHAR 2 );
+PROCEDURE pro_b (b_para VARCHAR 2 ) ;
+
+#Package Body 
+PROCEDURE pro_a (a_para VARCHAR2)
+IS
+    no NUMBER;
+    ...
+PROCEDURE pro_b (b_para VARCHAR 2 ) ;
+IS
+    val NUMBER;
+    ...
+```
+
 ## 트리거 (Trigger)
+* 특정 이벤트가 발생했을때 자동으로 실행되는 스토어드 프로시저(Stored Procedure).
+* enable 해두면 해당 이벤트가 발생했을 때 자동으로 실행, 명시적으로는 실행할 수 없음. 
+* Auditing이나 해당 이벤트에 연동하여 특정 처리를 하고 싶은 경우에 많이 쓰임. 
+
 
