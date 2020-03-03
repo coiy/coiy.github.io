@@ -1,7 +1,7 @@
 ---
 published: true
 layout: single
-title: "테이블 row count를 정확하게 구하기"
+title: "PL/SQL 기본 개념 이해하기"
 category: PostgreSQL
 comments: false
 ---
@@ -21,11 +21,11 @@ OS가 무엇이든 오라클이 동작하는 환경에서라면 PL/SQL 구문을
 * 퍼포먼스 측면에서 유리할 수 있다.   
 프로그래밍 언어에서 여러 SQL 구문으로 처리하는 경우에는 다양한 미들웨어를 거치면서 오라클 서버와 통신하기 때문에 실행하는 SQL 구문의 수가 많을수록 오버헤드가 걸릴 수 있는 반면  PL/SQL은 블록에 포함돼 있는 다양한 SQL를 하나의 프로그램 단위로 실행하여 전송하기 때문에 오버헤드를 줄일 수 있다. PL/SQL 블록에 네임을 붙어주면 오라클 내부에 구문 분석이 완료된 상태로 저장해둘 수도 있는데(Stored) 이렇게 해두면 구문 분석이 생략되어 부하를 더 줄일 수도 있다. 
 
- ![wal_segment_file](/assets/plsql1.png)
+ ![plsql1](/assets/plsql1.png)
 > 👆SQL 단위로 처리하는 경우 Image from [プロとしてのOracle PL/PSQL入門](https://www.amazon.co.jp/dp/B00QJINRLG/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1)
 
 
- ![wal_segment_file](/assets/plsql2.png)
+ ![plsql2](/assets/plsql2.png)
 > 👆PL/SQL 블록 단위로 처리하는 경우 Image from [プロとしてのOracle PL/PSQL入門](https://www.amazon.co.jp/dp/B00QJINRLG/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1)
 
 
@@ -72,7 +72,27 @@ END;
 ## %TYPE, %ROWTYPE 속성 
 PL/SQL을 사용하다보면 테이블에서 검색한 데이터를 직접 변수에 대입하는 경우가 자주 있는데 오라클의 데이터를 직접 취급하는 경우에 대응하는 변수를 %TYPE, %ROWTYPE으로 정의하면 매우 편리하다. 
 
+%TYPE, %ROWTYPE 속성은 데이터 타입을 직접 지정하는 것이 아니라 오라클 컬럼의 데이터 타입이나 이미 정의돼 있는 변수의 데이터 타입을 참조한다. 
 
+```sql 
+DECLARE 
+    var dept.deptno%TYPE; 
+BEGIN
+    SELECT deptno INTO var from dept 
+        WHERE loc = 'SEOUL'; 
+    DBMS_OUTPUT.PUT_LINE(var);
+```
+위 예제에서 var라는 변수의 데이터 타입은 dept.deptno%TYPE으로 정의돼 있는데 이는 dept라는 테이블의 deptno 컬럼과 동일한 데이터 타입을 사용하겠다는 의미다. 
+
+### %TYPE 속성
+특정한 테이블의 컬럼에 정의된 데이터 타입을 참조한다. 
+기본 형식은 <변수명> <테이블명>.<컬럼명>%TYPE; 
+
+### %ROWTYPE 속성
+%TYPE 속성이 특정한 테이블의 컬럼에 정의된 데이터 타입을 참조하는 데 반해 %ROWTYPE 속성은 테이블(또는 뷰)의 행 구조를 참조한다. 따라서 %ROWTYPE 타입의 변수는 각 컬럼의 데이터를 저장하기 위해 행 구조와 동일한 수의 필드 영역을 확보하고 각 컬럼의 이름과 데이터 타입을 그대로 참조한다. 
+
+![plsql3](/assets/plsql3.png)
+> 👆PL/SQL 블록 단위로 처리하는 경우 Image from [プロとしてのOracle PL/PSQL入門](https://www.amazon.co.jp/dp/B00QJINRLG/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1)
 
 # PL/SQL의 종류 
 
@@ -81,4 +101,15 @@ PL/SQL을 사용하다보면 테이블에서 검색한 데이터를 직접 변�
 * 프로시저 (Procedure)
 * 패키지 (Package)
 * 트리거 (Trigger)
+
+
+## 익명 블록 (PL/SQL anonymous block)
+
+## 함수 (Function)
+
+## 프로시저 (Procedure)
+
+## 패키지 (Package)
+ 
+## 트리거 (Trigger)
 
