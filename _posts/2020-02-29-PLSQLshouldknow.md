@@ -217,6 +217,7 @@ ALTER PROCEDURE pro1 COMPILE;
 * 프로시저나 함수와는 다르게 사양(specification)을 기술하는 부분과 본체(body)로 나누어 기술해야 한다. 
 * 캡슐화/비즈니스 로직을 감출 수 있다. 
 * 퍼포먼스 향상, 재사용성 높음 
+
 ```sql 
 #Package Specification
 PROCEDURE pro_a (a_para VARCHAR 2 );
@@ -272,3 +273,8 @@ EDB 사에서는 개발자를 위한 버전별 오라클 호환성 기능에 관
 * [EDB v11 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/11/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v11.pdf)
 * [EDB v12 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/12/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v12.pdf)
 
+
+
+https://ora2pg.darold.net/documentation.html#PLSQL-to-PLPGSQL-conversion
+
+https://www.enterprisedb.com/edb-docs/d/postgresql/reference/manual/10.7/plpgsql-porting.html
