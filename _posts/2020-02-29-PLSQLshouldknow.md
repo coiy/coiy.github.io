@@ -238,4 +238,37 @@ IS
 * enable 해두면 해당 이벤트가 발생했을 때 자동으로 실행, 명시적으로는 실행할 수 없음. 
 * Auditing이나 해당 이벤트에 연동하여 특정 처리를 하고 싶은 경우에 많이 쓰임. 
 
+# Porting from Oracle PL/SQL 
+
+오라클 PL/SQL 구문의 기본 개념을 이해한 상태에서 Migration from Oracle to EDB/PostgreSQL을 수행하는 데 참고가 될 만한 내용들을 정리한다. 먼저 오라클과 EDB, PostgreSQL 간에 호환 가능한 데이터 타입을 확인한다. PostgreSQL의 경우에는 [이 글](https://www.cybertec-postgresql.com/en/mapping-oracle-datatypes-to-postgresql/)을 참고하여 대체 가능한 데이터 타입을 포함시켰다.  
+
+
+* Data Type Conversion 
+
+| Oracle  | EDB v10 | EDB v11 | EDB v12 | PostgreSQL | 
+| --------|---------|---------- | ------- |------- |
+|VARCHAR2 | VARCHAR2 | VARCHAR2 | VARCHAR2 |varchar (or char, text, json) |
+|DATE  | DATE | DATE | DATE |  date | 
+|LONG  | LONG | LONG | LONG | char, varchar, text |
+|CLOB | CLOB | CLOB | CLOB | char, varchar, text, json | 
+|BLOB | BLOB | BLOB | BLOB | bytea | 
+|NCLOB| ✖︎ | ✖︎ | ✖︎ | ✖︎ | 
+|RAW |RAW |RAW |RAW | uuid, bytea |
+|ROWID | ROWID | ROWID | ROWID | ctid (not the same) |
+|FLOAT |FLOAT |FLOAT | FLOAT| numeric, float4, float8 |
+|DEC | DEC| DEC| DEC | dec |
+|DECIMAL | DECIMAL | DECIMAL| DECIMAL | decimal |
+|INT| INT | INT | INT | integer | 
+|INTEGER| INTEGER | INTEGER | INTEGER | integer |
+|NUMBER| NUMBER | NUMBER | NUMBER | numeric |
+|TIMESTAMP|TIMESTAMP |TIMESTAMP |TIMESTAMP | timestamp |
+|PLS_INTEGER| PLS_INTEGER |PLS_INTEGER | PLS_INTEGER | ✖︎ |
+|TIMESTAMP WITH TIME ZONE|TIMESTAMP WITH TIME ZONE | TIMESTAMP WITH TIME ZONE| TIMESTAMP WITH TIME ZONE| timestamptz| 
+
+
+EDB 사에서는 개발자를 위한 버전별 오라클 호환성 기능에 관한 가이드 문서를 제공하기 때문에 참고하면 좋다. 
+
+* [EDB v10 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/10/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v10.pdf) 
+* [EDB v11 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/11/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v11.pdf)
+* [EDB v12 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/12/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v12.pdf)
 
