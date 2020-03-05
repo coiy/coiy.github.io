@@ -241,8 +241,7 @@ IS
 
 # Porting from Oracle PL/SQL 
 
-오라클 PL/SQL 구문의 기본 개념을 이해한 상태에서 Migration from Oracle to EDB/PostgreSQL을 수행하는 데 참고가 될 만한 내용들을 정리한다. 먼저 오라클과 EDB, PostgreSQL 간에 호환 가능한 데이터 타입을 확인한다. PostgreSQL의 경우에는 [이 글](https://www.cybertec-postgresql.com/en/mapping-oracle-datatypes-to-postgresql/)을 참고하여 대체 가능한 데이터 타입을 포함시켰다.  
-
+오라클 PL/SQL 구문의 기본 개념을 이해한 상태에서 Migration from Oracle to EDB/PostgreSQL을 수행하는 데 참고가 될 만한 내용들을 정리한다. 먼저 오라클과 EDB, PostgreSQL 간에 호환 가능한 주요 데이터 타입을 확인한다. PostgreSQL의 경우에는 [이 글](https://www.cybertec-postgresql.com/en/mapping-oracle-datatypes-to-postgresql/)을 참고하여 대체 가능한 데이터 타입을 포함시켰다.  
 
 * Data Type Conversion 
 
@@ -266,15 +265,15 @@ IS
 |PLS_INTEGER| PLS_INTEGER |PLS_INTEGER | PLS_INTEGER | ✖︎ |
 |TIMESTAMP WITH TIME ZONE|TIMESTAMP WITH TIME ZONE | TIMESTAMP WITH TIME ZONE| TIMESTAMP WITH TIME ZONE| timestamptz| 
 
-
-EDB 사에서는 개발자를 위한 버전별 오라클 호환성 기능에 관한 가이드 문서를 제공하기 때문에 참고하면 좋다. 
+## 읽어두면 좋을 레퍼런스 
+EDB 사에서는 개발자를 위한 버전별 오라클 호환성 기능에 관한 가이드 문서를 별도로 제공하고 있기 때문에 참고하면 좋다. 
 
 * [EDB v10 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/10/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v10.pdf) 
 * [EDB v11 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/11/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v11.pdf)
 * [EDB v12 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/12/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v12.pdf)
+* PG 개발그룹에서 작성한 [PL/pgSQL 명세서](https://www.postgresql.org/docs/10/plpgsql.html)도 주의 깊게 읽어둘 필요가 있다. 
+* Perl로 작성된 ora2pg 툴에 관한 문서에서 [PLSQL to PLPGSQL conversion](https://ora2pg.darold.net/documentation.html#PLSQL-to-PLPGSQL-conversion)도 참고한다. 
 
 
 
-https://ora2pg.darold.net/documentation.html#PLSQL-to-PLPGSQL-conversion
 
-https://www.enterprisedb.com/edb-docs/d/postgresql/reference/manual/10.7/plpgsql-porting.html
