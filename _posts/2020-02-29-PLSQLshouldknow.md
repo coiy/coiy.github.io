@@ -252,6 +252,9 @@ CREATE OR REPLACE FUNCTION mysum(int, int) RETURNS int AS
     ' SELECT $1 + $2; ' 
     LANGUAGE 'sql';
 ```
+함수의 본체(body)에 해당하는 부분은 `'`으로 묶여서 문자열로 취급되고 SQL로 작성되었으므로 LANGUAGE 'sql'라고 정의해준다.   
+
+
 
 
 ## Porting from Oracle PL/SQL 
