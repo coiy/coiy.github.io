@@ -1,7 +1,7 @@
 ---
 published: true
 layout: single
-title: "PL/SQL 기본 개념 이해하기"
+title: "PL/SQL, PL/pgSQL기본 개념 이해하기"
 category: PostgreSQL
 comments: false
 ---
@@ -239,7 +239,22 @@ IS
 * enable 해두면 해당 이벤트가 발생했을 때 자동으로 실행, 명시적으로는 실행할 수 없음. 
 * Auditing이나 해당 이벤트에 연동하여 특정 처리를 하고 싶은 경우에 많이 쓰임. 
 
-# Porting from Oracle PL/SQL 
+
+# PL/pgSQL 이해하기 
+여타의 RDBMS 벤더들이 DB서버 사이드에서 절차적 프로그래밍을 위한 언어로 오라클은 PL/SQL SQL Server는 Transact-SQL의 사용을 강제하는 데 반면 PostgreSQL에서는 가장 널리 쓰이는 SQL, PL/pgSQL뿐만 아니라 익스텐션 설치를 통해 PL/Perl, PL/Python, PL/Tcl 등도 지원한다. 
+
+## Stored Procedure와 함수(function)의 차이
+PRAGMA AUTONOMOUS_TRANSACTION를 사용하는 경우를 배제하면 함수는 일반적인 SQL 구문 속에서 사용이 가능하기 때문에 함수 내부에서 트랜잭션을 시작(start)하거나 완결(commit)할 수 없는 반면, 프로시저는 트랜잭션 컨트롤을 할 수 있어서 여러 개의 트랜잭션을 번갈아가며 실행할 수 있다. 프로시저는 SELECT 구문으로는 호출할 수 없고 CALL 구문을 이용하여 호출한다. 이 차이점에 유념할 필요가 있다. 함수는 PostgreSQL 초기 버전부터 존재한 기능인 반면 프로시저는 PostgreSQL 11 버전부터 지원한다. (EDB는 오라클 호환성 기능으로 9.x 버전부터 지원)  
+
+## 함수의 기본 형태 
+```sql 
+CREATE OR REPLACE FUNCTION mysum(int, int) RETURNS int AS
+    ' SELECT $1 + $2; ' 
+    LANGUAGE 'sql';
+```
+
+
+## Porting from Oracle PL/SQL 
 
 오라클 PL/SQL 구문의 기본 개념을 이해한 상태에서 Migration from Oracle to EDB/PostgreSQL을 수행하는 데 참고가 될 만한 내용들을 정리한다. 먼저 오라클과 EDB, PostgreSQL 간에 호환 가능한 주요 데이터 타입을 확인한다. PostgreSQL의 경우에는 [이 글](https://www.cybertec-postgresql.com/en/mapping-oracle-datatypes-to-postgresql/)을 참고하여 대체 가능한 데이터 타입을 포함시켰다.  
 
@@ -273,7 +288,5 @@ EDB 사에서는 개발자를 위한 버전별 오라클 호환성 기능에 관
 * [EDB v12 Database Compatibility for Oracle®](https://www.enterprisedb.com/edb-docs/static/docs/epas/12/Database_Compatibility_for_Oracle_Developers_Reference_Guide_v12.pdf)
 * PG 개발그룹에서 작성한 [PL/pgSQL 명세서](https://www.postgresql.org/docs/10/plpgsql.html)도 주의 깊게 읽어둘 필요가 있다. 
 * Perl로 작성된 ora2pg 툴에 관한 문서에서 [PLSQL to PLPGSQL conversion](https://ora2pg.darold.net/documentation.html#PLSQL-to-PLPGSQL-conversion)도 참고한다. 
-
-
 
 
