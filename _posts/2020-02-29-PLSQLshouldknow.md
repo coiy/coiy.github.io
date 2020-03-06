@@ -252,10 +252,23 @@ CREATE OR REPLACE FUNCTION mysum(int, int) RETURNS int AS
     ' SELECT $1 + $2; ' 
     LANGUAGE 'sql';
 ```
-함수의 본체(body)에 해당하는 부분은 `'`으로 묶여서 문자열로 취급되고 SQL로 작성되었으므로 LANGUAGE 'sql'라고 정의해준다.   
+함수의 본체(body)에 해당하는 부분은 작은 따옴표(`'`)로 묶어주어야 하는 이는 문자열로 취급된다. 그리고 위 예제는 SQL로 작성되었으므로 LANGUAGE 'sql'라고 정의해준다.   
 
-
-
+## 달러 기호로 문자열 묶기(dollar quoting)
+작은 따옴표(`'`)로 함수에 관한 코드를 문자열로 묶은 다음 PostgreSQL로 넘겨주는 과정에서 문제가 발생하는 경우가 있다. 문자열을 작은 따옴표로 묶는 것은 여러 프로그래밍 언어에서 많이들 써온 방식으로 보통은 이스케이핑 처리를 해서 넘기는데 PostgreSQL에서는 $$ 기호를 써서 전체 블록에 대한 이스케이핑 처리를 할 수 있다. mysum 함수는 아래와 같이 $$ 기호를 써서 정의할 수 있다. 
+```sql 
+CREATE OR REPLACE FUNCTION mysum(int, int) RETURNS int AS
+$$
+  SELECT $1 + $2;
+$$ LANGUAGE 'sql';
+```
+$$는 Perl이나 Bash에서 프로세스ID를 나타내는 일종의 예약어이기 때문에 아래 예제처럼 달러 기호 사이에 원하는 태그 값을 넣고 블록을 닫아주는 것으로 Perl이나 Bash에서 혹시라도 발생할 수 있는 에러를 방지할 수 있다. 
+```sql
+CREATE OR REPLACE FUNCTION mysum(int, int) RETURNS int AS
+$body$
+    SELECT $1 + $2;
+$body$ LANGUAGE 'sql';
+```
 
 ## Porting from Oracle PL/SQL 
 
