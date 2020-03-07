@@ -271,12 +271,7 @@ $body$ LANGUAGE 'sql';
 ```
 
 ## 함수와 트랜잭션 사용하기 
-함수를 작성할 때에도 트랜잭션이 가장 기본 단위인 것에는 변함이 없다. 함수 또한 트랜잭션 안에서 동작하고(always part of the transaction you are in) autonomous하지 않다. autonomous 트랜잭션의 기본 아이디어는 트랜잭션이 롤백되더라도 어떤 부분은 여전히 필요하기 때문에 유지되어야 한다는 것이다. 이에 관한 고전적인 예를 들어보면 아래와 같다. 
-
-1. 중요한 데이터(secret data)를 조회하는 함수를 실행한다. 
-2. 이 중요한 데이터에 변경이 발생했다면 그에 대한 로그 메시지를 작성한다. 
-3. 로그 메시지를 커밋하고 데이터 변경분에 대해서는 롤백한다. 
-4. 데이터 변경을 시도한 것에 관한 정보를 저장한다. 
+함수를 작성할 때에도 트랜잭션이 가장 기본 단위인 것에는 변함이 없다. 함수 또한 트랜잭션 안에서 동작하고(always part of the transaction) autonomous하지 않다. 
 
 ```sql 
 edb=# SELECT now(), mysum(id, id) FROM generate_series(1, 3) AS id;
@@ -291,7 +286,34 @@ edb=#
 ```
 위 예제에서는 1부터 3까지의 범위에서 id라는 alias에 대입된 값이 mysum 함수의 파라미터로 넘어가고 이 함수가 3번 호출되는데 실행된 시간(now)을 통해서 같은 트랜잭션에서 실행되었음을 알 수 있다. 2번째 함수 호출에서 커밋되거나 하는 일은 있을 수 없다. 
 
-그러나 오라클에서 autonomous transaction을 허용하는 메커니즘을 도입했다. 
+그러나 오라클에서 autonomous 트랜잭션을 허용하는 메커니즘을 도입했다. autonomous 트랜잭션의 기본 아이디어는 트랜잭션이 롤백되더라도 어떤 부분은 여전히 필요하기 때문에 유지되어야 한다는 것이다. 이에 관한 고전적인 예를 들어보면 아래와 같다. 
+
+1. 중요한 데이터(secret data)를 조회하는 함수를 실행한다. 
+2. 이 중요한 데이터에 변경이 발생했다면 그에 대한 로그 메시지를 작성한다. 
+3. 로그 메시지를 커밋하고 데이터 변경분에 대해서는 롤백한다. 
+4. 데이터 변경을 시도한 것에 관한 정보를 저장한다. 
+
+위와 같은 문제를 해결하기 위해서 autonomous 트랜잭션이 사용된다. 메인 트랜잭션 안에서 메인 트랜잭션과 독립적으로 트랜잭션을 커밋할 수 있다. 데이터 변경 분이 롤백되더라도 로그 메시지를 저장하는 트랜잭션은 영향을 받지 않는다. PostgreSQL에서는 아직 autonomous 트랜잭션이 지원되지 않지만(EDB에서는 가능) 조만간 지원될 것으로 보인다. 
+
+```sql
+# autonomous 트랜잭션의 기본 형태
+AS
+$$
+    DECLARE PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    FOR i IN 0..9 LOOP
+        START TRANSACTION;
+        INSERT INTO test1 VALUES (i);
+        IF i % 2 = 0 THEN
+            COMMIT;
+        ELSE
+            ROLLBACK;
+        END IF;
+    END LOOP;
+    RETURN 42;
+END;
+$$;
+```
 
 ## Porting from Oracle PL/SQL 
 
