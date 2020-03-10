@@ -314,6 +314,80 @@ BEGIN
 END;
 $$;
 ```
+## PL/pgSQL 간략한 소개 
+[Mastering PostgreSQL 11](https://www.packtpub.com/big-data-and-business-intelligence/mastering-postgresql-11-second-edition)에 소개된 기능 위주로 살펴보면서 PL/pgSQL의 특징을 알아보자.  
+
+### quoting 핸들링 
+데이터베이스 프로그래밍에서 가장 중요한 것 가운데 하나는 quoting일 것이다. 적절하게 quoting 처리를 하지 않으면 SQL injection이나 보안에 취약해질 수 있다.   
+
+```sql
+CREATE FUNCTION broken(text) RETURNS void AS
+$$
+DECLARE
+    v_sql text;
+BEGIN
+    v_sql := 'SELECT schemaname FROM pg_tables WHERE tablename = ''' || $1 || '''';
+    RAISE NOTICE 'v_sql: %', v_sql;
+    RETURN;
+END;
+$$ LANGUAGE 'plpgsql';
+```
+위 함수는 문자열 변수를 받은 다음 || 연산자를 통해서 앞뒤 문자열에 붙여주도록 하는 기능을 가진 평범한 함수이지만 SQL injection에 취약한 부분이 있다. 
+
+```sql 
+edb=# SELECT broken('t_test');
+NOTICE:  v_sql: SELECT schemaname FROM pg_tables WHERE tablename = 't_test'
+ broken
+--------
+
+(1 row)
+
+edb=#
+```
+나쁜 의도를 가지고 아래와 같이 SQL injection 공격을 시도하는 경우를 생각해보자. 구문에는 문제가 없으므로 먼저 SELECT 구문이 실행되고 이어서 DROP table 구문이 실행될 수 있는 위험이 있다. 
+```sql 
+edb=# SELECT broken('''; DROP TABLE t_test; ');
+NOTICE:  v_sql: SELECT schemaname FROM pg_tables WHERE tablename = ''; DROP TABLE t_test; '
+ broken
+--------
+
+(1 row)
+
+edb=#
+```
+위와 같은 SQL injection에 대비하기 위해 `quote_ident()`, `quote_literal()`, `format()` 같은 함수를 써서 문자열 타입으로 받아오는 파라미터에 대해 적절한 quoting 처리를 해야 한다. PostgreSQL 공식 문서의 [Executing Dynamic Commands](https://www.postgresql.org/docs/10/plpgsql-statements.html#PLPGSQL-QUOTE-LITERAL-EXAMPLE) 항목을 참고한다. 
+
+## scope 관리하기 
+다른 프로그래밍 언어들과 마찬가지로 PL/pgSQL에서 사용되는 변수도 컨텍스트에 따라 유효한 범위가 다르다. PL/pgSQL에서 변수는 DECLARE 선언 후 정의된다. 
+
+```sql
+CREATE FUNCTION scope_test() RETURNS int AS
+$$
+DECLARE
+    i int := 7;
+BEGIN
+    RAISE NOTICE 'i1: %', i;
+    DECLARE
+        i int;
+    BEGIN
+        RAISE NOTICE 'i2: %', i;
+    END;
+    RETURN i;
+END;
+$$ LANGUAGE 'plpgsql';
+```
+함수 실행 결과는 아래와 같다. 
+```sql
+edb=# call scope_test() ;
+NOTICE:  i1: 7
+NOTICE:  i2: <NULL>
+ scope_test
+------------
+          7
+(1 row)
+
+edb=#
+```
 
 ## Porting from Oracle PL/SQL 
 
