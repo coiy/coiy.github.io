@@ -389,6 +389,28 @@ NOTICE:  i2: <NULL>
 edb=#
 ```
 
+## 에러 핸들링 
+모든 프로그래밍은 에러가 발생할 가능성이 있기 때문에 적절하면서도 효율적인 방식으로 에러를 처리하는 것이 중요하다. 여느 프로그래밍 언어들처럼 PL/pgSQL에서도 EXCEPTION 블록을 사용하여 에러를 핸들링 할 수 있다. BEGIN 블록 내에서 문제가 발생하였을 때 그 문제를 캐치하여 적절하게 처리하는 것이 핵심 내용이다. 아래의 예제 함수는 division by zero 에러가 발생하면 그 에러를 캐치하여 적절하게 핸들링한다. 
+
+```sql 
+CREATE FUNCTION error_test(int, int) RETURNS int AS
+$$
+BEGIN
+    RAISE NOTICE 'debug message: % / %', $1, $2;
+    BEGIN
+        RETURN $1 / $2;
+    EXCEPTION
+        WHEN division_by_zero THEN RAISE NOTICE 'division by zero detected: %', sqlerrm;
+        WHEN others THEN RAISE NOTICE 'some other error: %', sqlerrm;
+    END;
+    RAISE NOTICE 'all errors handled';
+    RETURN 0;
+END;
+$$ LANGUAGE 'plpgsql';
+```
+EXCEPTION 블록에서 sqlerrm 변수에 담긴 에러 내용을 보여줌으로써 문제를 찾아 디버깅하기가 수월해진다. 사용자가 자신만의 exception을 정의하여 사용할 수도 있다. PostgreSQL에서는 사전에 정의된 다양한 에러 코드와 exception을 제공하니 [이 곳을 참고](https://www.postgresql.org/docs/10/errcodes-appendix.html)하여 관련 내용을 확인하자.  
+
+
 ## Porting from Oracle PL/SQL 
 
 오라클 PL/SQL 구문의 기본 개념을 이해한 상태에서 Migration from Oracle to EDB/PostgreSQL을 수행하는 데 참고가 될 만한 내용들을 정리한다. 먼저 오라클과 EDB, PostgreSQL 간에 호환 가능한 주요 데이터 타입을 확인한다. PostgreSQL의 경우에는 [이 글](https://www.cybertec-postgresql.com/en/mapping-oracle-datatypes-to-postgresql/)을 참고하여 대체 가능한 데이터 타입을 포함시켰다.  
