@@ -39,7 +39,8 @@ tmpfs           1.6G     0  1.6G   0% /run/user/999
 ## 아카이빙에 실패했을 때 일어나는 일 
 
 /archive이 가득 차도록 하기 위해 쓰기 트랜잭션을 대량으로 발생시켰다. 먼저 EDB 로그를 확인해보면 아래와 같다. 해당 디바이스의 여유 공간이 없어서 00000001000000000000005F이라는 이름의 WAL 파일을 아카이빙 하는 데 실패했다는 로그가 찍혔다. 
-```log
+
+```bash
 #EDB 로그
 2020-03-27 10:52:59 KST LOG:  archive command failed with exit code 1
 2020-03-27 10:52:59 KST DETAIL:  The failed archive command was: cp pg_wal/00000001000000000000005F /archive/00000001000000000000005F
