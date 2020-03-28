@@ -1,7 +1,7 @@
 ---
 published: true
 layout: single
-title: "Archived Wal Path의 용량 부족"
+title: "Archived Wal의 용량 부족 현상"
 category: PostgreSQL
 comments: false
 ---
@@ -17,7 +17,7 @@ Continuous Archiving을 위한 세팅 조건
 |wal_keep_segments |  10   |   최소한으로 존재해야 하는 WAL 파일 숫자를 정의한다.    |
 |archive_mode |  on   | 아카이브 모드로 쓰려면 필수로 on이어야 한다.   |
 |archive_command |  cp %p /archive/%f   | WAL 파일을 어디로 어떻게 아카이브 할지 정의한다. 자신의 환경에 따라 아카이브 path는 다를 수 있다.      |
-|archive_timeout |  0  | 설정된 시간값에 도달하면 WAL이 아카이브된다. 피폴트는 0 값으로 이 기능은 disabled 돼 있다.  |
+|archive_timeout |  0  | 설정된 시간값에 도달하면 WAL이 아카이브된다. 디폴트는 0 값으로 이 기능은 disabled 돼 있다.  |
 
 아카이브 WAL을 계속 쌓아나갈 수는 없기 때문에 crontab으로 
 정해진 삭제 정책을 준수하는 선에서 아카이브 디렉토리의 아카이브 WAL 파일을 삭제하여 용량 관리를 하도록 안내한다.   
