@@ -89,6 +89,7 @@ drwx------ 3 enterprisedb enterprisedb 4096 Mar 27 01:52 ..
 # 파일명이 00000001000000000000005F 작은 값들을 추려내서 파일로 저장한다. 
 ls /archive | awk '$0 < "00000001000000000000005F"' > /tmp/temp.sh
 
+# vim editor 기준 
 # 모든 라인의 맨 처음을 mv /archive/로 치환한다.
 :%s/^/mv \/archive\//g
 
