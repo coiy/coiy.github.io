@@ -6,7 +6,18 @@ category: PostgreSQL
 comments: false
 ---
 
-archive_mode를 on으로 하고 archive_command 파라미터에 자신의 상황에 맞는 커맨드와 함께 path를 지정하면 pg_wal(또는 pg_xlog)에 있는 WAL 파일이 해당 path로 아카이빙된다. 이렇게 아카이빙된 WAL 파일(pg_wal의 WAL파일과 구별하기 위해 이하 아카이브 WAL로 통일)은 Point In Time Recovery에 사용되기 때문에 과거 시점의 아카이브 WAL을 많이 보유할수록 복원시점을 더 먼 과거로 설정할 수 있다.
+archive_mode를 on으로 하고 archive_command 파라미터에 자신의 상황에 맞는 커맨드와 함께 path를 지정하면 pg_wal(또는 pg_xlog)에 있는 WAL 파일이 해당 path로 아카이빙된다. 이렇게 아카이빙된 WAL 파일(pg_wal의 WAL파일과 구별하기 위해 이하 아카이브 WAL로 통일)은 Point In Time Recovery에 사용되기 때문에 basebackup을 취득한 시점을 기준으로 아카이브 WAL을 많이 보유할수록 복원시점을 더 먼 과거로 설정할 수 있다.
+
+Continuous Archiving을 위한 세팅 조건 
+
+|파라미터 |  설정값 |  설명
+| --------------------------- | ------------------------- |------------------------- |
+|wal_level |  archive   | archive 이상이어야 한다. |
+|max_wal_size |  1GB  | 보통 pg_wal(또는 pg_xlog) 디렉토리에 저장되는 WAL 파일들의 총합을 뜻한다. soft limit이라서 약간 초과할 수 있다.  |
+|wal_keep_segments |  10   |   최소한으로 존재해야 하는 WAL 파일 숫자를 정의한다.    |
+|archive_mode |  on   | 아카이브 모드로 쓰려면 필수로 on이어야 한다.   |
+|archive_command |  cp %p /archive/%f   | WAL 파일을 어디로 어떻게 아카이브 할지 정의한다. 자신의 환경에 따라 아카이브 path는 다를 수 있다.      |
+|archive_timeout |  0  | 설정된 시간값에 도달하면 WAL이 아카이브된다. 피폴트는 0 값으로 이 기능은 disabled 돼 있다.  |
 
 아카이브 WAL을 계속 쌓아나갈 수는 없기 때문에 crontab으로 
 정해진 삭제 정책을 준수하는 선에서 아카이브 디렉토리의 아카이브 WAL 파일을 삭제하여 용량 관리를 하도록 안내한다.   
@@ -92,3 +103,8 @@ source /tmp/temp.sh
 ```
 
 여기까지 문제가 없었다면 아카이브 WAL path에 여유공간이 확보되었을 것이다. 로그를 모니터링 하면서 select pg_switch_wal();을 실행해 wal 로그를 한번 스위치 해준다. 
+
+## 참고 레퍼런스 
+* [Continuous Archiving and Point-in-Time Recovery](https://www.postgresql.org/docs/11/continuous-archiving.html)
+* [PostgreSQL WAL Archiving](https://www.opsdash.com/blog/postgresql-wal-archiving-backup.html)
+* [When will PostgreSQL execute archive_command](https://dba.stackexchange.com/questions/51578/when-will-postgresql-execute-archive-command-to-archive-wal-files)
