@@ -74,4 +74,5 @@ tcp        0      0 0.0.0.0:5444            0.0.0.0:*               LISTEN      
 tcp6       0      0 :::5444                 :::*                    LISTEN      5682/edb-postgres
 
 ```
-
+## 지금까지 생성된 WAL 파일의 총 용량
+select pg_size_pretty(pg_current_wal_insert_lsn() - '0/00000000'::pg_lsn);
