@@ -140,4 +140,10 @@ tcp6       0      0 :::5444                 :::*                    LISTEN      
 ## 지금까지 생성된 WAL 파일의 총 용량
 select pg_size_pretty(pg_current_wal_insert_lsn() - '0/00000000'::pg_lsn);
 
-
+## vacuum clean-up을 막고 있는 세션 찾기 
+```bash 
+SELECT pid, age(backend_xmin), datname, usename, state, backend_xmin, substring(query, 1, 50) as shorten_query, age(now(), query_start) AS age
+FROM pg_stat_activity
+WHERE backend_xmin IS NOT NULL and pid <> pg_backend_pid()
+ORDER BY age(backend_xmin) DESC;
+```
